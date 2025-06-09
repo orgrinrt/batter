@@ -1,0 +1,9 @@
+**/*.*~
+*.*~
+
+reference-assemblies/
+refs/
+packages/
+bin/
+obj/
+_Package/
