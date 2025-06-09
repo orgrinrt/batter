@@ -1,79 +1,71 @@
 using System.Reflection;
 using System.Xml;
+using Batter.Core.Behaviours;
+using Batter.Core.Models;
+using Batter.Core.Patches;
+using Batter.Core.Utils;
 using HarmonyLib;
-using SafeWarLogPatch.Behaviours;
-using SafeWarLogPatch.Models;
-using SafeWarLogPatch.Patches;
-using SafeWarLogPatch.Utils;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
-using TaleWorlds.Localization;
 using TaleWorlds.MountAndBlade;
 using TaleWorlds.ObjectSystem;
 
-namespace SafeWarLogPatch;
+namespace Batter.Core;
 
-public class SubModule : MBSubModuleBase
-{
-    private static bool _logInitialized;
-    
-    private const string ModName = "Batter";
-    private static readonly string ModNameLower = ModName.ToLower();
+public class SubModule : MBSubModuleBase {
+    private const String MOD_NAME = "Batter";
+    private static Boolean _logInitialized;
+    private static readonly String MOD_NAME_LOWER = SubModule.MOD_NAME.ToLower();
 
-    protected override void OnSubModuleLoad()
-    {
-        BatterLog.Hr(nameof(OnSubModuleLoad) + " START");
+    protected override void OnSubModuleLoad() {
+        BatterLog.Hr(nameof(SubModule.OnSubModuleLoad) + " START");
 
         base.OnSubModuleLoad();
 
-        if (!_logInitialized)
-        {
+        if (!SubModule._logInitialized) {
             BatterLog.Info("Started OnSubmoduleLoad");
-            _logInitialized = true;
+            SubModule._logInitialized = true;
         }
 
-        var harmony = new Harmony($"mod.{ModNameLower}");
+        var harmony = new Harmony($"mod.{SubModule.MOD_NAME_LOWER}");
 
-        TryPatch(harmony, typeof(EventDispatcherOnWarDeclaredPatch));
-        TryPatch(harmony, typeof(DiplomacyModHasMarriedClanLeaderRelationPatch));
-        TryPatch(harmony, typeof(HeroIsHumanPlayerCharacterPatch));
-        TryPatch(harmony, typeof(HeroIsFriendPatch));
-        TryPatch(harmony, typeof(LogEntryHistoryGetRelevantCommentPatch));
-        TryPatch(harmony, typeof(DeclareWarLogEntryGetConversationScoreAndCommentPatch));
-        TryPatch(harmony, typeof(DefaultDiplomacyModelGetScoreOfDeclaringWarPatch));
-        TryPatch(harmony, typeof(DefaultDiplomacyModelGetScoreOfDeclaringWarInternalPatch));
-        TryPatch(harmony, typeof(ClanGetRelationWithClanPatch));
-        TryPatch(harmony, typeof(VillagerCampaignBehaviourOnSettlementEnteredPatch));
-        TryPatch(harmony, typeof(CampaignEventsOnSettlementEnteredPatch));
-        TryPatch(harmony, typeof(VillagerCampaignBehvaiourHourlyTickPartyPatch));
-        TryPatch(harmony, typeof(CampaignEventsHourlyTickPartyPatch));
-        TryPatch(harmony, typeof(CampaignEventsDailyTickClanPatch));
-        TryPatch(harmony, typeof(CampaignEventsDailyTickSettlementPatch));
-        TryPatch(harmony, typeof(TownMarketDataGetPricePatch));
-        TryPatch(harmony, typeof(WorkshopsCampaignBehaviorProduceAnOutputToTownPatch));
-        TryPatch(harmony, typeof(TournamentCachePossibleEliteRewardItemsPatch));
+        this.TryPatch(harmony, typeof(EventDispatcherOnWarDeclaredPatch));
+        this.TryPatch(harmony, typeof(DiplomacyModHasMarriedClanLeaderRelationPatch));
+        this.TryPatch(harmony, typeof(HeroIsHumanPlayerCharacterPatch));
+        this.TryPatch(harmony, typeof(HeroIsFriendPatch));
+        this.TryPatch(harmony, typeof(LogEntryHistoryGetRelevantCommentPatch));
+        this.TryPatch(harmony, typeof(DeclareWarLogEntryGetConversationScoreAndCommentPatch));
+        this.TryPatch(harmony, typeof(DefaultDiplomacyModelGetScoreOfDeclaringWarPatch));
+        this.TryPatch(harmony, typeof(DefaultDiplomacyModelGetScoreOfDeclaringWarInternalPatch));
+        this.TryPatch(harmony, typeof(ClanGetRelationWithClanPatch));
+        this.TryPatch(harmony, typeof(VillagerCampaignBehaviourOnSettlementEnteredPatch));
+        this.TryPatch(harmony, typeof(CampaignEventsOnSettlementEnteredPatch));
+        this.TryPatch(harmony, typeof(VillagerCampaignBehvaiourHourlyTickPartyPatch));
+        this.TryPatch(harmony, typeof(CampaignEventsHourlyTickPartyPatch));
+        this.TryPatch(harmony, typeof(CampaignEventsDailyTickClanPatch));
+        this.TryPatch(harmony, typeof(CampaignEventsDailyTickSettlementPatch));
+        this.TryPatch(harmony, typeof(TownMarketDataGetPricePatch));
+        this.TryPatch(harmony, typeof(WorkshopsCampaignBehaviorProduceAnOutputToTownPatch));
+        this.TryPatch(harmony, typeof(TournamentCachePossibleEliteRewardItemsPatch));
 
 
-        Action<string, Action> patchRunner = (name, apply)
-            => TryPatch(harmony, name, apply);
+        Action<String, Action> patchRunner = (name, apply)
+            => this.TryPatch(harmony, name, apply);
 
         // patch all roster getters, logging each one uniformly:
         ItemRosterGetterPatches.PatchAll(harmony, patchRunner);
 
-        BatterLog.Hr(nameof(OnSubModuleLoad) + " END");
+        BatterLog.Hr(nameof(SubModule.OnSubModuleLoad) + " END");
     }
 
-    protected override void OnGameStart(Game game, IGameStarter starterObject)
-    {
-        BatterLog.Hr(nameof(OnGameStart) + " START");
+    protected override void OnGameStart(Game game, IGameStarter starterObject) {
+        BatterLog.Hr(nameof(SubModule.OnGameStart) + " START");
 
         base.OnGameStart(game, starterObject);
         //HeroDiagnostics.DumpBrokenHeroes();
-        try
-        {
-            if (game.GameType is Campaign)
-            {
+        try {
+            if (game.GameType is Campaign) {
                 var campaignStarter = (CampaignGameStarter)starterObject;
                 BatterLog.Info(" >> Adding ComputedPriceRegistry behaviour...");
                 campaignStarter.AddBehavior(ComputedPriceRegistry.Instance);
@@ -90,76 +82,51 @@ public class SubModule : MBSubModuleBase
                 // DumpMergedXmlCache();
             }
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             BatterLog.Error("     >> failed to initialize submodule:\n {ex}");
         }
 
-        BatterLog.Hr(nameof(OnGameStart) + " END");
+        BatterLog.Hr(nameof(SubModule.OnGameStart) + " END");
     }
 
-    protected override void OnSubModuleUnloaded()
-    {
-        BatterLog.Hr(nameof(OnSubModuleUnloaded) + " START");
+    protected override void OnSubModuleUnloaded() {
+        BatterLog.Hr(nameof(SubModule.OnSubModuleUnloaded) + " START");
 
         BatterLog.Shutdown();
 
-        BatterLog.Hr(nameof(OnSubModuleUnloaded) + " END");
+        BatterLog.Hr(nameof(SubModule.OnSubModuleUnloaded) + " END");
     }
 
-    private void DumpMergedXmlCache()
-    {
+    private void DumpMergedXmlCache() {
         var mgr = MBObjectManager.Instance;
         foreach (var f in typeof(MBObjectManager)
                      .GetFields(BindingFlags.NonPublic | BindingFlags.Instance))
-            if (typeof(IDictionary<string, XmlDocument>).IsAssignableFrom(f.FieldType))
-            {
-                var dict = f.GetValue(mgr) as IDictionary<string, XmlDocument>;
-                if (dict != null)
-                    foreach (var key in dict.Keys)
-                        InformationManager.DisplayMessage(
-                            new InformationMessage($"[XML Cache] key: {key}"));
+            if (typeof(IDictionary<String, XmlDocument>).IsAssignableFrom(f.FieldType)) {
+                if (f.GetValue(mgr) is not IDictionary<String, XmlDocument> dict) continue;
+                foreach (var key in dict.Keys)
+                    InformationManager.DisplayMessage(
+                        new($"[XML Cache] key: {key}"));
             }
     }
 
 
-    private void TryPatch(Harmony harmony, Type patchType)
-    {
-        try
-        {
+    private void TryPatch(Harmony harmony, Type patchType) {
+        try {
             harmony.CreateClassProcessor(patchType).Patch();
             BatterLog.Info($"✅ Patched: {patchType.Name}");
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             BatterLog.Info($"❌ Failed to patch {patchType.Name}: {ex}");
         }
     }
 
-    private void TryPatch(Harmony harmony, string patchName, Action apply)
-    {
-        try
-        {
+    private void TryPatch(Harmony harmony, String patchName, Action apply) {
+        try {
             apply();
             BatterLog.Info($"✅ Patched: {patchName}");
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             BatterLog.Info($"❌ Failed to patch {patchName}: {ex}");
         }
-    }
-}
-
-public class ClanNameGenerator
-{
-    public static TextObject GenerateClanNameForHero(Hero hero)
-    {
-        var culture = hero.Culture;
-        var originSettlement = hero.CurrentSettlement;
-
-        // Generate a clan name based on the hero's culture and current settlement
-        var clanName = NameGenerator.Current.GenerateClanName(culture, originSettlement);
-
-        return clanName;
     }
 }

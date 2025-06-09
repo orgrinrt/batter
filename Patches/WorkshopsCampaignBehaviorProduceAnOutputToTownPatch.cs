@@ -1,6 +1,6 @@
 using System.Reflection;
+using Batter.Core.Utils;
 using HarmonyLib;
-using SafeWarLogPatch.Utils;
 using TaleWorlds.CampaignSystem.CampaignBehaviors;
 using TaleWorlds.CampaignSystem.Settlements.Workshops;
 using TaleWorlds.Core;
@@ -8,33 +8,28 @@ using TaleWorlds.Core;
 // for EquipmentElement
 // for Workshop
 
-namespace SafeWarLogPatch.Patches;
+namespace Batter.Core.Patches;
 
 [HarmonyPatch]
-public static class WorkshopsCampaignBehaviorProduceAnOutputToTownPatch
-{
-    private static MethodBase TargetMethod()
-    {
+public static class WorkshopsCampaignBehaviorProduceAnOutputToTownPatch {
+    private static MethodBase TargetMethod() {
         return AccessTools.Method(
             typeof(WorkshopsCampaignBehavior),
             "ProduceAnOutputToTown",
-            new[]
-            {
+            new[] {
                 typeof(EquipmentElement),
                 typeof(Workshop),
-                typeof(bool)
+                typeof(Boolean),
             });
     }
 
-    private static bool Prefix(EquipmentElement outputItem)
-    {
+    private static Boolean Prefix(EquipmentElement outputItem) {
         if ( /*itemRosterElement.IsEmpty
             || */outputItem.IsInvalid()
                  || outputItem.Equals(default(EquipmentElement))
                  || (outputItem.Item == null && outputItem.CosmeticItem == null) // no ItemObject
             /*|| itemRosterElement.Item.WeaponComponent == null */ // example of deeper null
-           )
-        {
+           ) {
             BatterLog.Error(
                 $"[WorkshopsCampaignBehaviorProduce] Skipping ProduceAnOutputToTown for invalid element: {outputItem}");
             return false;
@@ -43,10 +38,8 @@ public static class WorkshopsCampaignBehaviorProduceAnOutputToTownPatch
         return true;
     }
 
-    private static Exception Finalizer(Exception __exception)
-    {
-        if (__exception != null)
-        {
+    private static Exception Finalizer(Exception __exception) {
+        if (__exception != null) {
             BatterLog.Error(
                 $"[WorkshopsCampaignBehaviorProduce] ProduceAnOutputToTown threw {__exception.GetType().Name}: {__exception.Message}");
             return null;

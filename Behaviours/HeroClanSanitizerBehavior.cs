@@ -1,5 +1,5 @@
 using Bannerlord.ButterLib.ObjectSystem.Extensions;
-using SafeWarLogPatch.Utils;
+using Batter.Core.Utils;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.Core;
@@ -7,28 +7,24 @@ using TaleWorlds.Localization;
 
 // ← for SetFlag / HasFlag
 
-namespace SafeWarLogPatch.Behaviours;
+namespace Batter.Core.Behaviours;
 
-public class HeroClanSanitizerBehavior : CampaignBehaviorBase
-{
-    private const string SanitizedFlagKey = "SafeWarLogPatch.HeroSanitized";
+public class HeroClanSanitizerBehavior : CampaignBehaviorBase {
+    private const String SanitizedFlagKey = "SafeWarLogPatch.HeroSanitized";
     private static readonly Random _random = new();
 
     // Keep track of which heroes we've already sanitized during this session
-    private static readonly HashSet<string> _alreadySanitized = new();
+    private static readonly HashSet<String> _alreadySanitized = new();
 
-    public override void RegisterEvents()
-    {
-        CampaignEvents.OnGameLoadedEvent.AddNonSerializedListener(this, OnGameLoaded);
+    public override void RegisterEvents() {
+        CampaignEvents.OnGameLoadedEvent.AddNonSerializedListener(this, this.OnGameLoaded);
     }
 
-    public override void SyncData(IDataStore dataStore)
-    {
+    public override void SyncData(IDataStore dataStore) {
         // No persistent data beyond the in‐memory _alreadySanitized set.
     }
 
-    private void OnGameLoaded(CampaignGameStarter starter)
-    {
+    private void OnGameLoaded(CampaignGameStarter starter) {
         BatterLog.Info("[Sanitizer] Running hero data sanitization...");
 
         var sanitizedCount = 0;
@@ -36,87 +32,77 @@ public class HeroClanSanitizerBehavior : CampaignBehaviorBase
 
         var allHeroes = Hero.AllAliveHeroes.ToList();
 
-        foreach (var hero in allHeroes)
-        {
-            if (hero == null || ShouldSkip(hero))
-            {
+        foreach (var hero in allHeroes) {
+            if (hero == null || HeroClanSanitizerBehavior.ShouldSkip(hero)) {
                 skippedCount++;
                 continue;
             }
 
-            if (_alreadySanitized.Contains(hero.StringId))
-            {
+            if (HeroClanSanitizerBehavior._alreadySanitized.Contains(hero.StringId)) {
                 skippedCount++;
                 continue;
             }
 
-            try
-            {
-                if (SanitizeHero(hero))
-                {
-                    _alreadySanitized.Add(hero.StringId);
-                    MarkHeroAsSanitized(hero);
+            try {
+                if (this.SanitizeHero(hero)) {
+                    HeroClanSanitizerBehavior._alreadySanitized.Add(hero.StringId);
+                    HeroClanSanitizerBehavior.MarkHeroAsSanitized(hero);
                     sanitizedCount++;
                 }
-                else
-                {
+                else {
                     skippedCount++;
                 }
             }
-            catch (Exception ex)
-            {
-                BatterLog.Error($"[Sanitizer] Error processing hero {SafeHeroName(hero)}: {ex}");
+            catch (Exception ex) {
+                BatterLog.Error(
+                    $"[Sanitizer] Error processing hero {HeroClanSanitizerBehavior.SafeHeroName(hero)}: {ex}");
             }
         }
 
         BatterLog.Info($"[Sanitizer] Completed: Sanitized {sanitizedCount} heroes, skipped {skippedCount} heroes.");
     }
 
-    private bool SanitizeHero(Hero hero)
-    {
+    private Boolean SanitizeHero(Hero hero) {
         if (hero.IsWanderer)
             return false;
 
         var changed = false;
 
         // 1) Ensure culture
-        if (hero.Culture == null || hero.Culture.Name == null || string.IsNullOrWhiteSpace(hero.Culture.Name.Value))
-        {
-            var inferredCulture = InferCulture(hero);
-            if (inferredCulture != null && !Equals(hero.Culture, inferredCulture))
-            {
+        if (hero.Culture == null || hero.Culture.Name == null || String.IsNullOrWhiteSpace(hero.Culture.Name.Value)) {
+            var inferredCulture = this.InferCulture(hero);
+            if (inferredCulture != null && !Equals(hero.Culture, inferredCulture)) {
                 hero.Culture = inferredCulture;
-                BatterLog.Info($"[Sanitizer] Assigned culture '{inferredCulture.Name}' to hero {SafeHeroName(hero)}");
+                BatterLog.Info(
+                    $"[Sanitizer] Assigned culture '{inferredCulture.Name}' to hero {HeroClanSanitizerBehavior.SafeHeroName(hero)}");
                 changed = true;
             }
         }
 
         // 2) Generate parents if missing
-        changed |= GenerateParentsForHero(hero);
+        changed |= this.GenerateParentsForHero(hero);
 
         // 3) Assign name if missing/placeholder
-        changed |= AssignHeroNameIfMissing(hero);
+        changed |= this.AssignHeroNameIfMissing(hero);
 
         // 4) Fix clan & faction
-        changed |= FixClanAndFaction(hero);
+        changed |= HeroClanSanitizerBehavior.FixClanAndFaction(hero);
 
         // 5) Ensure at least one friend
-        changed |= AssignFriendIfNone(hero);
+        changed |= this.AssignFriendIfNone(hero);
 
         return changed;
     }
 
     #region Inference Methods
 
-    private CultureObject InferCulture(Hero hero)
-    {
+    private CultureObject InferCulture(Hero hero) {
         // A) From father or mother
         if (hero.Father?.Culture != null) return hero.Father.Culture;
         if (hero.Mother?.Culture != null) return hero.Mother.Culture;
 
         // B) From any friendly relation > 30
-        foreach (var other in Hero.AllAliveHeroes)
-        {
+        foreach (var other in Hero.AllAliveHeroes) {
             if (other == hero) continue;
             var rel = CharacterRelationManager.GetHeroRelation(hero, other);
             if (rel > 30 && other.Culture != null) return other.Culture;
@@ -139,7 +125,7 @@ public class HeroClanSanitizerBehavior : CampaignBehaviorBase
         // G) Fallback: pick a random culture
         var allCultures = Campaign.Current.ObjectManager.GetObjectTypeList<CultureObject>();
         if (allCultures != null && allCultures.Count > 0)
-            return allCultures[_random.Next(allCultures.Count)];
+            return allCultures[HeroClanSanitizerBehavior._random.Next(allCultures.Count)];
 
         return null;
     }
@@ -148,8 +134,7 @@ public class HeroClanSanitizerBehavior : CampaignBehaviorBase
 
     #region Parents Generation
 
-    private bool GenerateParentsForHero(Hero hero)
-    {
+    private Boolean GenerateParentsForHero(Hero hero) {
         var changed = false;
 
         var culture = hero.Culture ?? Hero.MainHero?.Culture;
@@ -157,27 +142,26 @@ public class HeroClanSanitizerBehavior : CampaignBehaviorBase
         if (hero == null || culture == null)
             return false;
 
-        if (hero.Father == null)
-        {
-            var newDad = CreateNewRandomHero(culture);
-            if (newDad != null)
-            {
+        if (hero.Father == null) {
+            var newDad = this.CreateNewRandomHero(culture);
+            if (newDad != null) {
                 // Immediately mark parent as dead so they do not take part in ticks
                 newDad.ChangeState(Hero.CharacterStates.Dead);
 
                 hero.Father = newDad;
-                BatterLog.Info($"[Sanitizer] Created father '{SafeHeroName(newDad)}' for {SafeHeroName(hero)}");
+                BatterLog.Info(
+                    $"[Sanitizer] Created father '{HeroClanSanitizerBehavior.SafeHeroName(newDad)}' for {HeroClanSanitizerBehavior.SafeHeroName(hero)}");
                 changed = true;
             }
         }
 
-        var newMom = CreateNewRandomHero(culture);
-        if (newMom != null)
-        {
+        var newMom = this.CreateNewRandomHero(culture);
+        if (newMom != null) {
             newMom.ChangeState(Hero.CharacterStates.Dead);
 
             hero.Mother = newMom;
-            BatterLog.Info($"[Sanitizer] Created mother '{SafeHeroName(newMom)}' for {SafeHeroName(hero)}");
+            BatterLog.Info(
+                $"[Sanitizer] Created mother '{HeroClanSanitizerBehavior.SafeHeroName(newMom)}' for {HeroClanSanitizerBehavior.SafeHeroName(hero)}");
             changed = true;
         }
 
@@ -188,11 +172,9 @@ public class HeroClanSanitizerBehavior : CampaignBehaviorBase
 
     #region Friend Assignment
 
-    private bool AssignFriendIfNone(Hero hero)
-    {
+    private Boolean AssignFriendIfNone(Hero hero) {
         // If the hero already has any relation > 30, skip
-        foreach (var other in Hero.AllAliveHeroes)
-        {
+        foreach (var other in Hero.AllAliveHeroes) {
             if (other == hero) continue;
             if (CharacterRelationManager.GetHeroRelation(hero, other) > 30)
                 return false;
@@ -201,20 +183,21 @@ public class HeroClanSanitizerBehavior : CampaignBehaviorBase
         var culture = hero.Culture ?? Hero.MainHero?.Culture;
         if (culture == null) return false;
 
-        var friend = CreateNewRandomHero(culture);
+        var friend = this.CreateNewRandomHero(culture);
         if (friend == null) return false;
 
         // If they already share a relation, skip
-        if (AreAlreadyFriends(hero, friend)) return false;
+        if (HeroClanSanitizerBehavior.AreAlreadyFriends(hero, friend)) return false;
 
         // Ensure friend has a valid clan/faction
-        FixClanAndFaction(friend);
+        HeroClanSanitizerBehavior.FixClanAndFaction(friend);
 
         // Set mutual +40 relation
         CharacterRelationManager.SetHeroRelation(hero, friend, 40);
         CharacterRelationManager.SetHeroRelation(friend, hero, 40);
 
-        BatterLog.Info($"[Sanitizer] Assigned new friend '{SafeHeroName(friend)}' to hero {SafeHeroName(hero)}");
+        BatterLog.Info(
+            $"[Sanitizer] Assigned new friend '{HeroClanSanitizerBehavior.SafeHeroName(friend)}' to hero {HeroClanSanitizerBehavior.SafeHeroName(hero)}");
         return true;
     }
 
@@ -222,16 +205,15 @@ public class HeroClanSanitizerBehavior : CampaignBehaviorBase
 
     #region Name Assignment
 
-    private bool AssignHeroNameIfMissing(Hero hero)
-    {
-        if (hero.Name != null && !IsPlaceholderName(hero.Name.ToString()))
+    private Boolean AssignHeroNameIfMissing(Hero hero) {
+        if (hero.Name != null && !this.IsPlaceholderName(hero.Name.ToString()))
             return false;
 
         // Ensure we have a culture to hand to the generator
         var culture = hero.Culture ?? Hero.MainHero?.Culture;
-        if (culture == null)
-        {
-            BatterLog.Warning($"[Sanitizer] Cannot assign name: no culture for {SafeHeroName(hero)}");
+        if (culture == null) {
+            BatterLog.Warning(
+                $"[Sanitizer] Cannot assign name: no culture for {HeroClanSanitizerBehavior.SafeHeroName(hero)}");
             return false;
         }
 
@@ -243,21 +225,21 @@ public class HeroClanSanitizerBehavior : CampaignBehaviorBase
             false // or true if you want deterministic
         );
 
-        if (fullName != null)
-        {
+        if (fullName != null) {
             // Note: SetName expects (fullName, firstName). If you only care about fullName, pass it twice.
             hero.SetName(fullName, firstName ?? fullName);
-            BatterLog.Info($"[Sanitizer] Assigned generated name '{fullName}' to hero {SafeHeroName(hero)}");
+            BatterLog.Info(
+                $"[Sanitizer] Assigned generated name '{fullName}' to hero {HeroClanSanitizerBehavior.SafeHeroName(hero)}");
             return true;
         }
 
-        BatterLog.Warning($"[Sanitizer] NameGenerator produced no name for {SafeHeroName(hero)}");
+        BatterLog.Warning(
+            $"[Sanitizer] NameGenerator produced no name for {HeroClanSanitizerBehavior.SafeHeroName(hero)}");
         return false;
     }
 
-    private bool IsPlaceholderName(string name)
-    {
-        if (string.IsNullOrWhiteSpace(name)) return true;
+    private Boolean IsPlaceholderName(String name) {
+        if (String.IsNullOrWhiteSpace(name)) return true;
         // Look for “NPCCharacter”, “NewHero”, etc.
         return name.IndexOf("NPCCharacter", StringComparison.OrdinalIgnoreCase) >= 0
                || name.IndexOf("NewHero", StringComparison.OrdinalIgnoreCase) >= 0;
@@ -267,8 +249,7 @@ public class HeroClanSanitizerBehavior : CampaignBehaviorBase
 
     #region Clan & Faction Repair
 
-    public static bool FixClanAndFaction(Hero hero)
-    {
+    public static Boolean FixClanAndFaction(Hero hero) {
         if (hero.IsWanderer)
             return false;
 
@@ -280,23 +261,20 @@ public class HeroClanSanitizerBehavior : CampaignBehaviorBase
         var faction = hero.MapFaction ?? hero.Father?.MapFaction ?? hero.Mother?.MapFaction;
 
         // 3) If no clan, create a fallback one
-        if (clan == null)
-        {
-            clan = CreateFallbackClanForHero(hero);
-            BatterLog.Info($"[Sanitizer] Created fallback clan for {SafeHeroName(hero)}");
+        if (clan == null) {
+            clan = HeroClanSanitizerBehavior.CreateFallbackClanForHero(hero);
+            BatterLog.Info($"[Sanitizer] Created fallback clan for {HeroClanSanitizerBehavior.SafeHeroName(hero)}");
             changed = true;
         }
 
         // 4) If hero.Clan is still null, assign the new clan
-        if (hero.Clan == null && clan != null)
-        {
+        if (hero.Clan == null && clan != null) {
             hero.Clan = clan;
             changed = true;
         }
 
         // 5) If hero.MapFaction is null, we must assign the clan to a Kingdom
-        if (hero.MapFaction == null)
-        {
+        if (hero.MapFaction == null) {
             Kingdom kingdomToUse = null;
 
             // a) If the clan already belongs to a kingdom, reuse it
@@ -307,19 +285,17 @@ public class HeroClanSanitizerBehavior : CampaignBehaviorBase
                 kingdomToUse = Kingdom.All.FirstOrDefault(k => k.Culture == hero.Culture);
 
             // c) As a last resort, pick any existing kingdom
-            if (kingdomToUse == null && Kingdom.All.Any()) kingdomToUse = Kingdom.All[_random.Next(Kingdom.All.Count)];
+            if (kingdomToUse == null && Kingdom.All.Any())
+                kingdomToUse = Kingdom.All[HeroClanSanitizerBehavior._random.Next(Kingdom.All.Count)];
 
-            if (kingdomToUse != null)
-            {
+            if (kingdomToUse != null) {
                 clan.Kingdom = kingdomToUse;
                 changed = true;
             }
         }
-        else
-        {
+        else {
             // 6) If hero.MapFaction was already set, ensure clan’s faction matches
-            if (faction is Kingdom kf && clan.Kingdom != kf)
-            {
+            if (faction is Kingdom kf && clan.Kingdom != kf) {
                 clan.Kingdom = kf;
                 changed = true;
             }
@@ -328,14 +304,13 @@ public class HeroClanSanitizerBehavior : CampaignBehaviorBase
         return changed;
     }
 
-    public static Clan CreateFallbackClanForHero(Hero hero)
-    {
+    public static Clan CreateFallbackClanForHero(Hero hero) {
         var culture = hero.Culture ?? Hero.MainHero?.Culture;
         if (culture == null)
             return null;
 
         // Build a unique string ID for the new clan
-        var clanStringId = $"sanitized_clan_{hero.StringId}_{_random.Next(10000)}";
+        var clanStringId = $"sanitized_clan_{hero.StringId}_{HeroClanSanitizerBehavior._random.Next(10000)}";
         if (Clan.All.Any(c => c.StringId == clanStringId)) clanStringId = $"{clanStringId}_{DateTime.UtcNow.Ticks}";
 
         // Create the clan object (using the static factory)
@@ -347,7 +322,7 @@ public class HeroClanSanitizerBehavior : CampaignBehaviorBase
         var generatedName = NameGenerator.Current.GenerateClanName(culture, originSettlement);
         if (generatedName == null)
             // Fallback to a plain TextObject if generator returned null
-            generatedName = new TextObject($"Clan_{hero.FirstName}");
+            generatedName = new($"Clan_{hero.FirstName}");
 
         // Initialize the clan with that name
         newClan.InitializeClan(
@@ -375,10 +350,8 @@ public class HeroClanSanitizerBehavior : CampaignBehaviorBase
 
     #region Helpers
 
-    private Hero CreateNewRandomHero(CultureObject culture)
-    {
-        if (culture == null)
-        {
+    private Hero CreateNewRandomHero(CultureObject culture) {
+        if (culture == null) {
             culture = Hero.MainHero?.Culture;
             if (culture == null)
                 return null;
@@ -396,7 +369,7 @@ public class HeroClanSanitizerBehavior : CampaignBehaviorBase
         if (!candidates.Any())
             return null;
 
-        var template = candidates[_random.Next(candidates.Count)];
+        var template = candidates[HeroClanSanitizerBehavior._random.Next(candidates.Count)];
 
         // 2) Pick a settlement of that culture (or a random one if none match)
         var bornSettlement = Settlement.All
@@ -404,7 +377,7 @@ public class HeroClanSanitizerBehavior : CampaignBehaviorBase
                              ?? Settlement.All.GetRandomElement();
 
         // 3) Age (20±5)
-        var ageYears = 20 + _random.Next(-5, 6);
+        var ageYears = 20 + HeroClanSanitizerBehavior._random.Next(-5, 6);
 
         // 4) Create it
         var newHero = HeroCreator.CreateSpecialHero(template, bornSettlement, null, null, ageYears);
@@ -416,8 +389,7 @@ public class HeroClanSanitizerBehavior : CampaignBehaviorBase
         newHero.CheckInvalidEquipmentsAndReplaceIfNeeded();
 
         // 6) If still no name, generate via NameGenerator
-        if (newHero.Name == null)
-        {
+        if (newHero.Name == null) {
             TextObject firstName, fullName;
             NameGenerator.Current.GenerateHeroNameAndHeroFullName(newHero, out firstName, out fullName);
             if (firstName != null && fullName != null)
@@ -428,15 +400,13 @@ public class HeroClanSanitizerBehavior : CampaignBehaviorBase
     }
 
 
-    private static bool AreAlreadyFriends(Hero a, Hero b)
-    {
+    private static Boolean AreAlreadyFriends(Hero a, Hero b) {
         if (a == null || b == null) return false;
         return CharacterRelationManager.GetHeroRelation(a, b) > 30
                || CharacterRelationManager.GetHeroRelation(b, a) > 30;
     }
 
-    private static bool ShouldSkip(Hero hero)
-    {
+    private static Boolean ShouldSkip(Hero hero) {
         if (hero == null) return true;
 
         // 1) If dead or disabled, skip immediately
@@ -444,7 +414,7 @@ public class HeroClanSanitizerBehavior : CampaignBehaviorBase
             return true;
 
         // 2) If we already gave them our “sanitized” flag, skip
-        if (hero.HasFlag(SanitizedFlagKey))
+        if (hero.HasFlag(HeroClanSanitizerBehavior.SanitizedFlagKey))
             return false; // true; NOTE: this should be true, but had issues, uh oh
 
         // 4) If it's merely a prisoner, fugitive, wounded, or traveling, skip those too:
@@ -470,21 +440,17 @@ public class HeroClanSanitizerBehavior : CampaignBehaviorBase
         return false;
     }
 
-    private static void MarkHeroAsSanitized(Hero hero)
-    {
+    private static void MarkHeroAsSanitized(Hero hero) {
         if (hero == null) return;
-        hero.SetFlag(SanitizedFlagKey); // <- use SetFlag(...) instead of SetCustomProperty
+        hero.SetFlag(HeroClanSanitizerBehavior.SanitizedFlagKey); // <- use SetFlag(...) instead of SetCustomProperty
     }
 
-    private static string SafeHeroName(Hero hero)
-    {
-        try
-        {
+    private static String SafeHeroName(Hero hero) {
+        try {
             if (hero == null) return "[null hero]";
             return hero.Name?.ToString() ?? $"[Unnamed: {hero.StringId}]";
         }
-        catch
-        {
+        catch {
             return $"[ErrorName:{hero?.StringId}]";
         }
     }

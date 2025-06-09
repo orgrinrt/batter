@@ -1,20 +1,16 @@
+using Batter.Core.Utils;
 using HarmonyLib;
-using SafeWarLogPatch.Utils;
 using TaleWorlds.CampaignSystem.CampaignBehaviors;
 using TaleWorlds.CampaignSystem.Party;
 
-namespace SafeWarLogPatch.Patches;
+namespace Batter.Core.Patches;
 
 [HarmonyPatch(typeof(VillagerCampaignBehavior), "HourlyTickParty")]
-public static class VillagerCampaignBehvaiourHourlyTickPartyPatch
-{
-    private static bool Prefix(MobileParty villagerParty)
-    {
-        try
-        {
+public static class VillagerCampaignBehvaiourHourlyTickPartyPatch {
+    private static Boolean Prefix(MobileParty villagerParty) {
+        try {
             // 1) If mobileParty or settlement is null, skip original.
-            if (villagerParty == null)
-            {
+            if (villagerParty == null) {
                 BatterLog.Warn("[SafeVillagerHourlyTickPatch] villagerParty or settlement is null.");
                 return false;
             }
@@ -46,55 +42,45 @@ public static class VillagerCampaignBehvaiourHourlyTickPartyPatch
                     "[SafeVillagerHourlyTickPatch] MobileParty's home settlement or village is missing. Attempting to proceed (if crashes, revert return to false here)");
             //villagerParty.RemoveParty();
             //return false;  // Prevent further execution
-            try
-            {
+            try {
                 return true; // Run original if no issues
             }
-            catch (KeyNotFoundException knf)
-            {
+            catch (KeyNotFoundException knf) {
                 BatterLog.Warn($"[SafeVillagerHourlyTickPatch] KeyNotFoundException for {villagerParty?.Name}: {knf}");
 
-                if (villagerParty != null)
-                {
+                if (villagerParty != null) {
                     BatterLog.Warn($"[SafeVillagerHourlyTickPatch] Destroying broken party: {villagerParty.Name}");
                     villagerParty.RemoveParty();
                 }
 
                 return false; // Skip original
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 BatterLog.Error($"[SafeVillagerHourlyTickPatch] Unexpected error: {ex}");
                 return false;
             }
         }
-        catch (KeyNotFoundException knf)
-        {
+        catch (KeyNotFoundException knf) {
             BatterLog.Warn($"[SafeVillagerHourlyTickPatch] KeyNotFoundException for {villagerParty?.Name}: {knf}");
 
-            if (villagerParty != null)
-            {
+            if (villagerParty != null) {
                 BatterLog.Warn($"[SafeVillagerHourlyTickPatch] Destroying broken party: {villagerParty.Name}");
                 villagerParty.RemoveParty();
             }
 
             return false; // Skip original
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             BatterLog.Error($"[SafeVillagerHourlyTickPatch] Unexpected error: {ex}");
             return false;
         }
     }
 
-    private static void Finalizer(MobileParty villagerParty, Exception __exception)
-    {
-        if (__exception != null)
-        {
+    private static void Finalizer(MobileParty villagerParty, Exception __exception) {
+        if (__exception != null) {
             BatterLog.Warn($"[SafeVillagerHourlyTickPatch] Exception: {__exception}");
 
-            if (villagerParty != null)
-            {
+            if (villagerParty != null) {
                 BatterLog.Warn($"Destroying broken party: {villagerParty.Name}");
                 villagerParty.RemoveParty();
             }

@@ -1,25 +1,21 @@
+using Batter.Core.Utils;
 using HarmonyLib;
-using SafeWarLogPatch.Utils;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.CampaignSystem.Settlements;
 
-namespace SafeWarLogPatch.Patches;
+namespace Batter.Core.Patches;
 
 [HarmonyPatch(typeof(CampaignEvents), "OnSettlementEntered")]
-public static class CampaignEventsOnSettlementEnteredPatch
-{
-    private static bool Prefix(MobileParty party, Settlement settlement, Hero hero)
-    {
-        try
-        {
+public static class CampaignEventsOnSettlementEnteredPatch {
+    private static Boolean Prefix(MobileParty party, Settlement settlement, Hero hero) {
+        try {
             if (hero == null)
                 BatterLog.Info(
                     "[SafeVillagerSettlementEntryPatch] hero is null. should not be a problem, but can be useful to know.");
 
             // 1) If mobileParty or settlement is null, skip original.
-            if (party == null || settlement == null)
-            {
+            if (party == null || settlement == null) {
                 BatterLog.Warn("[SafeVillagerSettlementEntryPatch] party or settlement is null. Skipping...");
                 return false;
             }
@@ -77,30 +73,25 @@ public static class CampaignEventsOnSettlementEnteredPatch
                     "[SafeVillagerSettlementEntryPatch] MobileParty's home settlement or village is missing. Attempting to proceed (if crashes, revert return to false here)");
             //party.RemoveParty();
             //return false;  // Prevent further execution
-            try
-            {
+            try {
                 return true; // Run original if no issues
             }
-            catch (KeyNotFoundException knf)
-            {
+            catch (KeyNotFoundException knf) {
                 BatterLog.Warn($"[SafeVillagerSettlementEntryPatch] KeyNotFoundException for {party?.Name}: {knf}");
 
-                if (party != null)
-                {
+                if (party != null) {
                     BatterLog.Warn($"[SafeVillagerSettlementEntryPatch] Destroying broken party: {party.Name}");
                     party.RemoveParty();
                 }
 
                 return false; // Skip original
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 BatterLog.Error($"[SafeVillagerHourlyTickPatch] Unexpected error: {ex}");
                 return false;
             }
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             var msg = $"[SafeVillagerSettlementEntryPatch] Error during SafeVillagerSettlementEntryPatch: {ex}";
             BatterLog.Error(msg);
 
@@ -110,12 +101,9 @@ public static class CampaignEventsOnSettlementEnteredPatch
     }
 
     // Harmony finalizer method to catch exceptions and log them instead of letting them crash the game.
-    private static void Finalizer(MobileParty party, Exception __exception)
-    {
-        try
-        {
-            if (__exception != null)
-            {
+    private static void Finalizer(MobileParty party, Exception __exception) {
+        try {
+            if (__exception != null) {
                 BatterLog.Warn(
                     $"[SafeVillagerSettlementEntryPatchLate] Suppressed exception in VillagerCampaignBehavior.OnSettlementEntered:\n  {__exception}");
                 // We intentionally do not rethrow. This prevents a KeyNotFoundException (or anything else)
@@ -123,8 +111,7 @@ public static class CampaignEventsOnSettlementEnteredPatch
                 party.RemoveParty();
             }
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             // If an error occurs within the finalizer itself, log it.
             BatterLog.Error($"[SafeVillagerSettlementEntryPatchLate] Error in finalizer: {ex}");
         }

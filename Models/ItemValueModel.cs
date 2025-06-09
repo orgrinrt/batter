@@ -1,13 +1,11 @@
-using SafeWarLogPatch.Behaviours;
+using Batter.Core.Behaviours;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
 
-namespace SafeWarLogPatch.Models;
+namespace Batter.Core.Models;
 
-public class OrgrinsItemValueModel : DefaultItemValueModel
-{
-    public override int CalculateValue(ItemObject item)
-    {
+public class OrgrinsItemValueModel : DefaultItemValueModel {
+    public override Int32 CalculateValue(ItemObject item) {
         var vanillaValue = base.CalculateValue(item);
 
         // look up computed price from registry
@@ -17,12 +15,10 @@ public class OrgrinsItemValueModel : DefaultItemValueModel
         return Math.Max(0, vanillaValue + computedPrice);
     }
 
-    public override float CalculateTier(ItemObject item)
-    {
+    public override Single CalculateTier(ItemObject item) {
         var vanillaTier = base.CalculateTier(item);
 
-        if (ComputedPriceRegistry.Instance.TryGetPrice(item.StringId, out var price))
-        {
+        if (ComputedPriceRegistry.Instance.TryGetPrice(item.StringId, out var price)) {
             // Example: assume price range maps from 0 to 75k → tier 0.5–7
             var priceFactor = MathF.Clamp(price / 75000f, 0f, 1f);
             var priceBasedTier = priceFactor * 6.5f; // adjust tier delta max
@@ -32,8 +28,7 @@ public class OrgrinsItemValueModel : DefaultItemValueModel
         return vanillaTier;
     }
 
-    public override float GetEquipmentValueFromTier(float itemTierf)
-    {
+    public override Single GetEquipmentValueFromTier(Single itemTierf) {
         return base.GetEquipmentValueFromTier(itemTierf);
     }
 }

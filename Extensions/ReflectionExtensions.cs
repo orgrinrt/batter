@@ -1,14 +1,11 @@
 using System.Reflection;
-using SafeWarLogPatch.Utils;
+using Batter.Core.Utils;
 
-namespace SafeWarLogPatch.Extensions;
+namespace Batter.Core.Extensions;
 
-public static class ReflectionExtensions
-{
-    public static void LogObjectPropertiesAndFields(this object obj, string objectName)
-    {
-        if (obj == null)
-        {
+public static class ReflectionExtensions {
+    public static void LogObjectPropertiesAndFields(this Object obj, String objectName) {
+        if (obj == null) {
             BatterLog.Warn($"{objectName} is null.");
             return;
         }
@@ -19,26 +16,22 @@ public static class ReflectionExtensions
         // Log properties
         var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
         foreach (var property in properties)
-            try
-            {
+            try {
                 var value = property.GetValue(obj);
                 BatterLog.Info($"  Property: {property.Name}, Value: {value?.ToString() ?? "null"}");
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 BatterLog.Error($"  Failed to read property {property.Name}: {ex.Message}");
             }
 
         // Log fields
         var fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance);
         foreach (var field in fields)
-            try
-            {
+            try {
                 var value = field.GetValue(obj);
                 BatterLog.Info($"  Field: {field.Name}, Value: {value?.ToString() ?? "null"}");
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 BatterLog.Error($"  Failed to read field {field.Name}: {ex.Message}");
             }
     }

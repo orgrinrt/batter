@@ -1,24 +1,20 @@
+using Batter.Core.Behaviours;
+using Batter.Core.Utils;
 using HarmonyLib;
-using SafeWarLogPatch.Behaviours;
-using SafeWarLogPatch.Utils;
 using TaleWorlds.CampaignSystem;
 
-namespace SafeWarLogPatch.Patches;
+namespace Batter.Core.Patches;
 
 [HarmonyPatch(typeof(CampaignEvents), "DailyTickClan")]
-public static class CampaignEventsDailyTickClanPatch
-{
+public static class CampaignEventsDailyTickClanPatch {
     /// <summary>
     ///     Prefix: if `clan` is null, skip the original DailyTickClan entirely.
     /// </summary>
-    private static bool Prefix(Clan clan)
-    {
-        try
-        {
+    private static Boolean Prefix(Clan clan) {
+        try {
             return clan != null;
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             BatterLog.Error($"[DailyTickClanPatch] Unexpected error in Prefix: {ex}");
             return false;
         }
@@ -28,8 +24,7 @@ public static class CampaignEventsDailyTickClanPatch
     ///     Finalizer: runs if the original DailyTickClan threw an exception.
     ///     Attempts to “fix” or disband a broken clan so that Bannerlord does not crash.
     /// </summary>
-    private static void Finalizer(Clan clan, Exception __exception)
-    {
+    private static void Finalizer(Clan clan, Exception __exception) {
         if (__exception == null)
             return;
 
@@ -40,11 +35,9 @@ public static class CampaignEventsDailyTickClanPatch
 
         BatterLog.Warn($"[DailyTickClanPatch] Attempting to repair or disband broken clan: {clan.Name}");
 
-        try
-        {
+        try {
             // If the clan has a Leader, sanitize that hero first.
-            if (clan.Leader != null)
-            {
+            if (clan.Leader != null) {
                 var leader = clan.Leader;
                 // Call the static helper we exposed above
                 HeroClanSanitizerBehavior.FixClanAndFaction(leader);
@@ -55,8 +48,7 @@ public static class CampaignEventsDailyTickClanPatch
                 // Reassign each lord to the new clan
                 if (clan.Lords != null && clan.Lords.Count > 0)
                     foreach (var lord in clan.Lords)
-                        if (lord != null)
-                        {
+                        if (lord != null) {
                             lord.Clan = newClan;
                             BatterLog.Info(
                                 $"[DailyTickClanPatch] Reassigned lord '{lord.Name}' -> clan '{newClan.Name}'");
@@ -65,8 +57,7 @@ public static class CampaignEventsDailyTickClanPatch
                 // Reassign each hero (non‐lord) to the new clan
                 if (clan.Heroes != null && clan.Heroes.Count > 0)
                     foreach (var member in clan.Heroes)
-                        if (member != null)
-                        {
+                        if (member != null) {
                             member.Clan = newClan;
                             BatterLog.Info(
                                 $"[DailyTickClanPatch] Reassigned hero '{member.Name}' -> clan '{newClan.Name}'");
@@ -79,8 +70,7 @@ public static class CampaignEventsDailyTickClanPatch
                 // Instead, remove everyone to break any dictionary lookups:
 
                 // Remove all lords from the old clan:
-                if (clan.Lords != null && clan.Lords.Count > 0)
-                {
+                if (clan.Lords != null && clan.Lords.Count > 0) {
                     // We must iterate a copy to avoid modifying the collection while enumerating
                     var lordsCopy = new Hero[clan.Lords.Count];
                     clan.Lords.CopyTo(lordsCopy, 0);
@@ -90,8 +80,7 @@ public static class CampaignEventsDailyTickClanPatch
                 }
 
                 // Remove all heroes from the old clan
-                if (clan.Heroes != null && clan.Heroes.Count > 0)
-                {
+                if (clan.Heroes != null && clan.Heroes.Count > 0) {
                     var heroesCopy = new Hero[clan.Heroes.Count];
                     clan.Heroes.CopyTo(heroesCopy, 0);
                     foreach (var member in heroesCopy)
@@ -101,14 +90,11 @@ public static class CampaignEventsDailyTickClanPatch
 
                 BatterLog.Info($"[DailyTickClanPatch] Cleared member lists of broken clan '{clan.Name}'");
             }
-            else
-            {
+            else {
                 // If there is no Leader but there are lords, promote the first lord to be leader
-                if (clan.Lords != null && clan.Lords.Count > 0)
-                {
+                if (clan.Lords != null && clan.Lords.Count > 0) {
                     var firstLord = clan.Lords[0];
-                    if (firstLord != null)
-                    {
+                    if (firstLord != null) {
                         clan.SetLeader(firstLord);
                         BatterLog.Info(
                             $"[DailyTickClanPatch] Promoted '{firstLord.Name}' to Leader of clan '{clan.Name}'");
@@ -123,15 +109,13 @@ public static class CampaignEventsDailyTickClanPatch
                 && (clan.Lords == null || clan.Lords.Count == 0)
                 && (clan.Heroes == null || clan.Heroes.Count == 0);
 
-            if (hasNoMembers)
-            {
+            if (hasNoMembers) {
                 var n = clan.Name.Value ?? "noname";
                 BatterLog.Warn($"[DailyTickClanPatch] Clan '{n}' has no remaining members; clearing its Kingdom.");
                 if (clan.Kingdom != null) clan.Kingdom = null;
             }
         }
-        catch (Exception repairEx)
-        {
+        catch (Exception repairEx) {
             BatterLog.Error($"[DailyTickClanPatch] Error while repairing clan '{clan.Name}': {repairEx}");
         }
     }

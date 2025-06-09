@@ -1,14 +1,13 @@
 using System.Diagnostics;
 using System.Reflection;
+using Batter.Core.Utils;
 using HarmonyLib;
-using SafeWarLogPatch.Utils;
 using TaleWorlds.CampaignSystem.Roster;
 using TaleWorlds.Core;
 
-namespace SafeWarLogPatch.Patches;
+namespace Batter.Core.Patches;
 
-public static class ItemRosterGetterPatches
-{
+public static class ItemRosterGetterPatches {
     /// <summary>
     ///     Installs safe guards on every ItemRoster getter/indexer.
     ///     Each patch is invoked via the provided patchRunner so you get
@@ -16,35 +15,32 @@ public static class ItemRosterGetterPatches
     /// </summary>
     public static void PatchAll(
         Harmony harmony,
-        Action<string, Action> patchRunner)
-    {
+        Action<String, Action> patchRunner) {
         // all the int properties
-        foreach (var prop in new[]
-                 {
+        foreach (var prop in new[] {
                      "Count", "VersionNo", "TotalFood", "FoodVariety",
                      "TotalValue", "TradeGoodsTotalValue",
-                     "NumberOfPackAnimals", "NumberOfLivestockAnimals", "NumberOfMounts"
+                     "NumberOfPackAnimals", "NumberOfLivestockAnimals", "NumberOfMounts",
                  })
             patchRunner(
                 $"ItemRoster.{prop}",
-                () => PatchProperty<int>(harmony, prop)
+                () => ItemRosterGetterPatches.PatchProperty<Int32>(harmony, prop)
             );
 
         // float TotalWeight
         patchRunner(
             "ItemRoster.TotalWeight",
-            () => PatchProperty<float>(harmony, "TotalWeight")
+            () => ItemRosterGetterPatches.PatchProperty<Single>(harmony, "TotalWeight")
         );
 
         // indexer this[int]
         patchRunner(
             "ItemRoster.get_Item(int)",
-            () => PatchIndexer<ItemRosterElement>(harmony)
+            () => ItemRosterGetterPatches.PatchIndexer<ItemRosterElement>(harmony)
         );
     }
 
-    private static void PatchProperty<T>(Harmony harmony, string propName)
-    {
+    private static void PatchProperty<T>(Harmony harmony, String propName) {
         var getter = AccessTools.PropertyGetter(typeof(ItemRoster), propName);
         var patchMethod = typeof(GenericFinalizerPatch<>)
             .MakeGenericType(typeof(T))
@@ -57,13 +53,12 @@ public static class ItemRosterGetterPatches
             null,
             null,
             null,
-            new HarmonyMethod(patchMethod)
+            new(patchMethod)
         );
     }
 
-    private static void PatchIndexer<T>(Harmony harmony)
-    {
-        var getter = AccessTools.DeclaredMethod(typeof(ItemRoster), "get_Item", new[] { typeof(int) });
+    private static void PatchIndexer<T>(Harmony harmony) {
+        var getter = AccessTools.DeclaredMethod(typeof(ItemRoster), "get_Item", new[] { typeof(Int32) });
         var patchMethod = typeof(GenericFinalizerPatch<>)
             .MakeGenericType(typeof(T))
             .GetMethod(nameof(GenericFinalizerPatch<T>.Finalizer),
@@ -74,7 +69,7 @@ public static class ItemRosterGetterPatches
             null,
             null,
             null,
-            new HarmonyMethod(patchMethod)
+            new(patchMethod)
         );
     }
 
@@ -82,13 +77,10 @@ public static class ItemRosterGetterPatches
     ///     Catches any exception from the original getter, logs it,
     ///     defaults the result, and swallows the exception.
     /// </summary>
-    public static class GenericFinalizerPatch<T>
-    {
-        public static void Finalizer(Exception __exception)
-        {
+    public static class GenericFinalizerPatch<T> {
+        public static void Finalizer(Exception __exception) {
             if (__exception != null)
-                try
-                {
+                try {
                     // figure out which getter blew up
                     var frame = new StackTrace().GetFrame(1);
                     var methodName = frame?.GetMethod()?.Name ?? "unknown";
@@ -96,8 +88,7 @@ public static class ItemRosterGetterPatches
                         $"[ItemRosterSafeGetters] {methodName} threw {__exception.GetType().Name}: {__exception.Message}");
                     //__result = default;
                 }
-                catch (Exception ex)
-                {
+                catch (Exception ex) {
                     BatterLog.Error($"[ItemRosterSafeGetters] failed to default result: {ex}");
                 }
             // swallow

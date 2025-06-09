@@ -1,26 +1,22 @@
+using Batter.Core.Utils;
 using HarmonyLib;
-using SafeWarLogPatch.Utils;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.LogEntries;
 
-namespace SafeWarLogPatch.Patches;
+namespace Batter.Core.Patches;
 
 [HarmonyPatch(typeof(DeclareWarLogEntry), nameof(DeclareWarLogEntry.GetConversationScoreAndComment))]
-public static class DeclareWarLogEntryGetConversationScoreAndCommentPatch
-{
-    private static bool Prefix(
+public static class DeclareWarLogEntryGetConversationScoreAndCommentPatch {
+    private static Boolean Prefix(
         DeclareWarLogEntry __instance,
         Hero talkTroop,
-        bool findString,
-        out string comment,
-        out ImportanceEnum score)
-    {
-        try
-        {
-            if (talkTroop == null || talkTroop.Clan == null || talkTroop.MapFaction == null)
-            {
+        Boolean findString,
+        out String comment,
+        out ImportanceEnum score) {
+        try {
+            if (talkTroop == null || talkTroop.Clan == null || talkTroop.MapFaction == null) {
                 BatterLog.Info($"[SafeDeclareWarLogEntryPatch] Skipping invalid talkTroop: {talkTroop?.Name}");
-                comment = string.Empty;
+                comment = String.Empty;
                 score = ImportanceEnum.Zero;
                 return false; // skip original
             }
@@ -32,10 +28,9 @@ public static class DeclareWarLogEntryGetConversationScoreAndCommentPatch
 
             return false;
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             BatterLog.Info($"[SafeDeclareWarLogEntryPatch] Exception caught in prefix: {ex}");
-            comment = string.Empty;
+            comment = String.Empty;
             score = ImportanceEnum.Zero;
             return false;
         }
