@@ -28,46 +28,47 @@
     </SubModules>
     <Xmls>
         <XmlNode>
-            <XmlName id="SPCultures" path="male_names_ext" />
+            <XmlName id="SPCultures" path="male_names_ext"/>
             <IncludedGameTypes>
                 <GameType value="Campaign"/>
                 <GameType value="CampaignStoryMode"/>
             </IncludedGameTypes>
         </XmlNode>
         <XmlNode>
-            <XmlName id="SPCultures" path="female_names_ext" />
+            <XmlName id="SPCultures" path="female_names_ext"/>
             <IncludedGameTypes>
                 <GameType value="Campaign"/>
                 <GameType value="CampaignStoryMode"/>
             </IncludedGameTypes>
         </XmlNode>
         <XmlNode>
-            <XmlName id="SPCultures" path="clan_names_ext" />
+            <XmlName id="SPCultures" path="clan_names_ext"/>
             <IncludedGameTypes>
                 <GameType value="Campaign"/>
                 <GameType value="CampaignStoryMode"/>
             </IncludedGameTypes>
         </XmlNode>
         <XmlNode>
-            <XmlName id="Items" path="armor_culture_autopatch" />
+            <XmlName id="Items" path="armor_culture_autopatch"/>
             <IncludedGameTypes>
                 <GameType value="Campaign"/>
                 <GameType value="CampaignStoryMode"/>
             </IncludedGameTypes>
         </XmlNode>
         <XmlNode>
-            <XmlName id="Items" path="fill_in_missing_prices" />
+            <XmlName id="Items" path="fill_in_missing_prices"/>
             <IncludedGameTypes>
                 <GameType value="Campaign"/>
                 <GameType value="CampaignStoryMode"/>
             </IncludedGameTypes>
         </XmlNode>
         <XmlNode>
-            <XmlName id="Items" path="item_variety" />
+            <XmlName id="Items" path="item_variety"/>
             <IncludedGameTypes>
                 <GameType value="Campaign"/>
                 <GameType value="CampaignStoryMode"/>
             </IncludedGameTypes>
         </XmlNode>
-    </Xmls>a
+    </Xmls>
+    a
 </Module>

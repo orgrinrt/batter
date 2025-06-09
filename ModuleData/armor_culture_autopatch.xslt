@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xsl:stylesheet version="1.0"
-                xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns:exsl="http://exslt.org/common"
+                version="1.0"
                 extension-element-prefixes="exsl">
-  <xsl:output method="xml" indent="yes"/>
+    <xsl:output method="xml" indent="yes"/>
 
-  <!-- Copy everything by default -->
-	<xsl:template match="@*|node()">
-		<xsl:copy>
-			<xsl:apply-templates select="@*|node()"/>
-		</xsl:copy>
-	</xsl:template>
+    <!-- Copy everything by default -->
+    <xsl:template match="@*|node()">
+        <xsl:copy>
+            <xsl:apply-templates select="@*|node()"/>
+        </xsl:copy>
+    </xsl:template>
 
-  <!-- ===========================================
-       1) Armor & Weapon Items: split into culture-variants
-     =========================================== -->
-  <xsl:template match="
+    <!-- ===========================================
+         1) Armor & Weapon Items: split into culture-variants
+       =========================================== -->
+    <xsl:template match="
      Item[
          @type='Horse'
       or @type='HorseHarness'
@@ -39,173 +39,208 @@
       or @type='Cape'
       or @type='Banner'
      ]" priority="2">
-     <!-- stash the whole original Item -->
-  <xsl:variable name="orig" select="."/>
+        <!-- stash the whole original Item -->
+        <xsl:variable name="orig" select="."/>
 
-    <!-- 1a) gather all Variant nodes -->
-    <xsl:variable name="allVariantsRtf">
-      <xsl:call-template name="determine-culture-ids">
-        <xsl:with-param name="name" select="@name"/>
-        <xsl:with-param name="id"   select="@id"/>
-      </xsl:call-template>
-    </xsl:variable>
-    <xsl:variable name="allVariants" select="exsl:node-set($allVariantsRtf)/Variant"/>
+        <!-- 1a) gather all Variant nodes -->
+        <xsl:variable name="allVariantsRtf">
+            <xsl:call-template name="determine-culture-ids">
+                <xsl:with-param name="name" select="@name"/>
+                <xsl:with-param name="id" select="@id"/>
+            </xsl:call-template>
+        </xsl:variable>
+        <xsl:variable name="allVariants" select="exsl:node-set($allVariantsRtf)/Variant"/>
 
-    <!-- 1b) emit one <Item> per matching culture -->
-    <xsl:for-each select="$allVariants">
-      <xsl:variable name="culture" select="normalize-space(culture)"/>
-      <xsl:variable name="origid"   select="normalize-space(id)"/>
+        <!-- 1b) emit one <Item> per matching culture -->
+        <xsl:for-each select="$allVariants">
+            <xsl:variable name="culture" select="normalize-space(culture)"/>
+            <xsl:variable name="origid" select="normalize-space(id)"/>
 
-      <Item>
-        <!-- copy everything except id & culture -->
-        <xsl:apply-templates select="@*[local-name()!='culture' and local-name()!='id']"/>
+            <Item>
+                <!-- copy everything except id & culture -->
+                <xsl:apply-templates select="@*[local-name()!='culture' and local-name()!='id']"/>
 
-        <!-- override id & culture, and explicitly turn ON merchant-flag on these variants -->
-        <xsl:attribute name="culture">
-          <xsl:value-of select="concat('Culture.',$culture)"/>
-        </xsl:attribute>
-        <xsl:attribute name="id">
-          <xsl:value-of select="concat($origid,'_',$culture)"/>
-        </xsl:attribute>
-        <xsl:attribute name="isMerchantItem">true</xsl:attribute>
+                <!-- override id & culture, and explicitly turn ON merchant-flag on these variants -->
+                <xsl:attribute name="culture">
+                    <xsl:value-of select="concat('Culture.',$culture)"/>
+                </xsl:attribute>
+                <xsl:attribute name="id">
+                    <xsl:value-of select="concat($origid,'_',$culture)"/>
+                </xsl:attribute>
+                <xsl:attribute name="isMerchantItem">true</xsl:attribute>
 
-        <!-- decorate children -->
-        <xsl:apply-templates select="$orig/node()" mode="decorate">
-          <xsl:with-param name="culture"  select="$culture"/>
-          <xsl:with-param name="itemType" select="@type"/>
-        </xsl:apply-templates>
-      </Item>
-    </xsl:for-each>
+                <!-- decorate children -->
+                <xsl:apply-templates select="$orig/node()" mode="decorate">
+                    <xsl:with-param name="culture" select="$culture"/>
+                    <xsl:with-param name="itemType" select="@type"/>
+                </xsl:apply-templates>
+            </Item>
+        </xsl:for-each>
 
-    <!-- 1c) if none matched, emit a single neutral‐culture variant -->
-    <xsl:if test="not($allVariants)">
-      <Item>
-        <xsl:apply-templates select="@*[local-name()!='culture' and local-name()!='id']"/>
-        <xsl:attribute name="culture">neutral_culture</xsl:attribute>
-        <xsl:attribute name="id">
-          <xsl:value-of select="concat(@id,'_neutral')"/>
-        </xsl:attribute>
-        <xsl:attribute name="isMerchantItem">false</xsl:attribute>
-        <xsl:apply-templates select="$orig/node()" mode="decorate">
-          <xsl:with-param name="culture"  select="'neutral_culture'"/>
-          <xsl:with-param name="itemType" select="@type"/>
-        </xsl:apply-templates>
-      </Item>
-    </xsl:if>
-
-
-  </xsl:template>
+        <!-- 1c) if none matched, emit a single neutral‐culture variant -->
+        <xsl:if test="not($allVariants)">
+            <Item>
+                <xsl:apply-templates select="@*[local-name()!='culture' and local-name()!='id']"/>
+                <xsl:attribute name="culture">neutral_culture</xsl:attribute>
+                <xsl:attribute name="id">
+                    <xsl:value-of select="concat(@id,'_neutral')"/>
+                </xsl:attribute>
+                <xsl:attribute name="isMerchantItem">false</xsl:attribute>
+                <xsl:apply-templates select="$orig/node()" mode="decorate">
+                    <xsl:with-param name="culture" select="'neutral_culture'"/>
+                    <xsl:with-param name="itemType" select="@type"/>
+                </xsl:apply-templates>
+            </Item>
+        </xsl:if>
 
 
-<!-- fallback in decorate mode: copy everything else -->
-  <xsl:template match="@*|node()" mode="decorate">
-   <xsl:param name="culture"/>
-    <xsl:param name="itemType"/>
-    <xsl:copy>
-      <xsl:apply-templates select="@*|node()" mode="decorate">
-        <xsl:with-param name="culture"  select="$culture"/>
-        <xsl:with-param name="itemType" select="$itemType"/>
-      </xsl:apply-templates>
+    </xsl:template>
+
+
+    <!-- fallback in decorate mode: copy everything else -->
+    <xsl:template match="@*|node()" mode="decorate">
+        <xsl:param name="culture"/>
+        <xsl:param name="itemType"/>
+        <xsl:copy>
+            <xsl:apply-templates select="@*|node()" mode="decorate">
+                <xsl:with-param name="culture" select="$culture"/>
+                <xsl:with-param name="itemType" select="$itemType"/>
+            </xsl:apply-templates>
         </xsl:copy>
     </xsl:template>
 
 
-
     <!-- 3) your giant contains() -> list-of-ids logic -->
-  <xsl:template name="determine-culture-ids">
-    <xsl:param name="name"/>
-    <xsl:param name="id"/>
-    <xsl:variable name="ln"  select="translate($name,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz')"/>
-    <xsl:variable name="lid" select="translate($id,  'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz')"/>
+    <xsl:template name="determine-culture-ids">
+        <xsl:param name="name"/>
+        <xsl:param name="id"/>
+        <xsl:variable name="ln" select="translate($name,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz')"/>
+        <xsl:variable name="lid" select="translate($id,  'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz')"/>
 
         <!-- everywhere in northern hemisphere -->
-			<xsl:if test="contains($ln, 'fur') or contains($lid, 'fur') or
+        <xsl:if test="contains($ln, 'fur') or contains($lid, 'fur') or
 					        contains($ln, 'warm') or contains($lid, 'warm') or
 							contains($ln, 'winter') or contains($lid, 'winter') or
 							contains($ln, 'snow') or contains($lid, 'snow')">
-<Variant>
-  <culture>germanic_bandits</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>welch</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>polish</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>latvian</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>sturgia</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>scottish</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>aestian</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>kryvian</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>jatvingian</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>volga_fin</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>rus</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-			</xsl:if>
+            <Variant>
+                <culture>germanic_bandits</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>welch</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>polish</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>latvian</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>sturgia</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>scottish</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>aestian</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>kryvian</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>jatvingian</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>volga_fin</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>rus</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+        </xsl:if>
 
-			<!-- everywhere in southern hemisphere -->
-			<xsl:if test="contains($ln, 'turban') or contains($lid, 'turban') or
+        <!-- everywhere in southern hemisphere -->
+        <xsl:if test="contains($ln, 'turban') or contains($lid, 'turban') or
 					        contains($ln, 'desert') or contains($lid, 'desert') or
 							contains($ln, 'sand') or contains($lid, 'sand') or
 							contains($ln, 'camel') or contains($lid, 'camel')">
-				<Variant>
-  <culture>aserai</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>ayyubid</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>persian</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>bedouin_bandits</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>desert_bandits</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>spanish</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>sicilian</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-			</xsl:if>
+            <Variant>
+                <culture>aserai</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>ayyubid</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>persian</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>bedouin_bandits</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>desert_bandits</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>spanish</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>sicilian</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+        </xsl:if>
 
-			<!-- VLANDIA KEYWORDS (Western European) -->
-			<xsl:if test="contains($ln, 'vlandian') or contains($lid, 'vlandian') or
+        <!-- VLANDIA KEYWORDS (Western European) -->
+        <xsl:if test="contains($ln, 'vlandian') or contains($lid, 'vlandian') or
 					        contains($ln, 'vlandia') or contains($lid, 'vlandia') or
 							contains($ln, '[eoe western') or contains($lid, '[eoe western') or
 							contains($ln, 'eoe western') or contains($lid, 'eoe western') or
@@ -235,62 +270,88 @@
 							contains($ln, 'chivalric') or contains($lid, 'chivalric') or
 							contains($ln, 'courtly') or contains($lid, 'courtly') or
 							contains($ln, 'bayeux') or contains($lid, 'bayeux')">
-				<Variant>
-  <culture>germanic_bandits</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>brigands</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>armenia</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>sicilian</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>roman</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>vlandia</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>polish</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>spain</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>empire</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>english</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>welch</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>bulgarian</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>latvian</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-			</xsl:if>
+            <Variant>
+                <culture>germanic_bandits</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>brigands</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>armenia</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>sicilian</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>roman</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>vlandia</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>polish</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>spain</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>empire</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>english</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>welch</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>bulgarian</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>latvian</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+        </xsl:if>
 
-			<!-- EMPIRE KEYWORDS (Roman/Byzantine) -->
-			<xsl:if test="contains($ln, 'empire') or contains($lid, 'empire') or
+        <!-- EMPIRE KEYWORDS (Roman/Byzantine) -->
+        <xsl:if test="contains($ln, 'empire') or contains($lid, 'empire') or
 							contains($ln, '[eoe byzantine') or contains($lid, '[eoe byzantine') or
 							contains($ln, 'eoe byzantine') or contains($lid, 'eoe byzantine') or
 							contains($ln, 'imperial') or contains($lid, 'imperial') or
@@ -318,46 +379,64 @@
 							contains($ln, 'scholae') or contains($lid, 'scholae') or
 							contains($ln, 'lorica') or contains($lid, 'lorica') or
 							contains($ln, 'squamata') or contains($lid, 'squamata')">
-				<Variant>
-  <culture>rus</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>brigands</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>bulgarian</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>armenia</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>sicilian</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>roman</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>georgia</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>byzantine</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>portuguese</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-			</xsl:if>
+            <Variant>
+                <culture>rus</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>brigands</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>bulgarian</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>armenia</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>sicilian</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>roman</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>georgia</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>byzantine</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>portuguese</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+        </xsl:if>
 
-			<!-- STURGIA KEYWORDS (Nordic/Slavic) -->
-			<xsl:if test="contains($ln, 'sturgian') or contains($lid, 'sturgian') or
+        <!-- STURGIA KEYWORDS (Nordic/Slavic) -->
+        <xsl:if test="contains($ln, 'sturgian') or contains($lid, 'sturgian') or
 					        contains($ln, 'sturgia') or contains($lid, 'sturgia') or
 							contains($ln, '[eoe nordic') or contains($lid, '[eoe nordic') or
 							contains($ln, 'eoe nordic') or contains($lid, 'eoe nordic') or
@@ -401,70 +480,100 @@
 							contains($ln, 'rus') or contains($lid, 'rus') or
 							contains($ln, 'slavic') or contains($lid, 'slavic') or
 							contains($ln, 'sloven') or contains($lid, 'sloven')">
-				<Variant>
-  <culture>hungary</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>volga_fin</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>sturgia</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>volhynian</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>scottish</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>aestian</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>germanic_bandits</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>pirates</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>brigands</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>nordic_bandits</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>sea_raiders</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>armenia</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>jatvingian</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>latvian</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>sicilian</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-			</xsl:if>
+            <Variant>
+                <culture>hungary</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>volga_fin</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>sturgia</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>volhynian</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>scottish</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>aestian</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>germanic_bandits</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>pirates</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>brigands</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>nordic_bandits</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>sea_raiders</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>armenia</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>jatvingian</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>latvian</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>sicilian</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+        </xsl:if>
 
-			<!-- BATTANIA KEYWORDS (Celtic/Highland) -->
-			<xsl:if test="contains($ln, 'battanian') or contains($lid, 'battanian') or
+        <!-- BATTANIA KEYWORDS (Celtic/Highland) -->
+        <xsl:if test="contains($ln, 'battanian') or contains($lid, 'battanian') or
 					        contains($ln, 'battania') or contains($lid, 'battania') or
 							contains($ln, 'highland') or contains($lid, 'highland') or
 							contains($ln, 'celtic') or contains($lid, 'celtic') or
@@ -488,86 +597,124 @@
 							contains($ln, 'tartan') or contains($lid, 'tartan') or
 							contains($ln, 'plaid') or contains($lid, 'plaid') or
 							contains($ln, 'coppergate') or contains($lid, 'coppergate')">
-				<Variant>
-  <culture>english</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>empire</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>hungary</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>volga_fin</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>battania</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>sturgia</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>polish</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>welch</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>volhynian</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>scottish</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>serbian</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>latvian</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>goldenhorde</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>jatvingian</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>aestian</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>germanic_bandits</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>forest_bandits</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>nordic_bandits</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>rus</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-			</xsl:if>
+            <Variant>
+                <culture>english</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>empire</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>hungary</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>volga_fin</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>battania</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>sturgia</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>polish</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>welch</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>volhynian</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>scottish</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>serbian</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>latvian</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>goldenhorde</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>jatvingian</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>aestian</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>germanic_bandits</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>forest_bandits</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>nordic_bandits</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>rus</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+        </xsl:if>
 
-			<!-- KHUZAIT KEYWORDS (Mongol/Turkic/Steppe) -->
-			<xsl:if test="contains($ln, 'khuzait') or contains($lid, 'khuzait') or
+        <!-- KHUZAIT KEYWORDS (Mongol/Turkic/Steppe) -->
+        <xsl:if test="contains($ln, 'khuzait') or contains($lid, 'khuzait') or
 							contains($ln, 'mongol') or contains($lid, 'mongol') or
 							contains($ln, 'turkic') or contains($lid, 'turkic') or
 					        contains($ln, 'samurai') or contains($lid, 'samurai') or
@@ -579,78 +726,112 @@
 							contains($ln, 'steppe') or contains($lid, 'steppe') or
 							contains($ln, 'nomad') or contains($lid, 'nomad') or
                             contains($ln, 'nomadic') or contains($lid, 'nomadic')">
-                <Variant>
-  <culture>khuzait</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>persian</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>volga_fin</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>volhynian</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>serbian</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>georgia</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>hungary</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>armenia</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>dregovian</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>kryvian</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>turkic_bandits</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>steppe_bandits</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>mountain_bandits</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>bedouin_bandits</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>forest_bandits</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>rus</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>goldenhorde</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-            </xsl:if>
+            <Variant>
+                <culture>khuzait</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>persian</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>volga_fin</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>volhynian</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>serbian</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>georgia</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>hungary</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>armenia</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>dregovian</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>kryvian</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>turkic_bandits</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>steppe_bandits</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>mountain_bandits</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>bedouin_bandits</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>forest_bandits</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>rus</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>goldenhorde</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+        </xsl:if>
 
-			<!-- ASERAI KEYWORDS (Arab/MENA/Desert) -->
-			<xsl:if test="contains($ln, 'aserai') or contains($lid, 'aserai') or
+        <!-- ASERAI KEYWORDS (Arab/MENA/Desert) -->
+        <xsl:if test="contains($ln, 'aserai') or contains($lid, 'aserai') or
 							contains($ln, 'sarranid') or contains($lid, 'sarranid') or
 							contains($ln, '[eoe mena') or contains($lid, '[eoe mena') or
 							contains($ln, 'eoe mena') or contains($lid, 'eoe mena') or
@@ -682,47 +863,67 @@
 							contains($ln, 'tagelmust') or contains($lid, 'tagelmust') or
 							contains($ln, 'kairouan') or contains($lid, 'kairouan') or
 							contains($ln, 'turban') or contains($lid, 'turban')">
-				<Variant>
-  <culture>khuzait</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>aserai</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>ayyubid</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>persian</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>bedouin_bandits</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>desert_bandits</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>pirates</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>spanish</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>sicilian</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-<Variant>
-  <culture>italian</culture>
-  <id><xsl:value-of select="$id"/></id>
-</Variant>
-			</xsl:if>
+            <Variant>
+                <culture>khuzait</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>aserai</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>ayyubid</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>persian</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>bedouin_bandits</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>desert_bandits</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>pirates</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>spanish</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>sicilian</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+            <Variant>
+                <culture>italian</culture>
+                <id>
+                    <xsl:value-of select="$id"/>
+                </id>
+            </Variant>
+        </xsl:if>
     </xsl:template>
 
 </xsl:stylesheet>
