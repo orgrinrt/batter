@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <Version>0.0.1</Version>
+        <TargetFramework>net472</TargetFramework>
+        <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+        <LangVersion>latest</LangVersion>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>disable</ImplicitUsings>
+
+        <PlatformTarget>x64</PlatformTarget>
+        <Prefer32Bit>false</Prefer32Bit>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+
+        <EnableDefaultCompileItems>true</EnableDefaultCompileItems>
+
+        <!-- Runtime path resolution -->
+        <GameFolder>$(BANNERLORD_GAME_DIR)</GameFolder>
+
+        <OutputPath>bin/$(GameBinariesFolder)/</OutputPath>
+    </PropertyGroup>
+    <!-- Include all source files in the project -->
+
+    <!-- NuGet dependencies -->
+    <ItemGroup>
+        <PackageReference Include="Lib.Harmony" Version="2.3.3"/>
+        <PackageReference Include="Bannerlord.ButterLib" Version="2.9.18">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>compile; runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Bannerlord.UIExtenderEx" Version="2.12.0"/>
+        <PackageReference Include="Bannerlord.MCM" Version="5.10.2"/>
+        <PackageReference Include="Bannerlord.ReferenceAssemblies" Version="1.2.12.66233" />
+
+    </ItemGroup>
+
+    <ItemGroup>
+        <Reference Include="Diplomacy">
+            <HintPath>$(GameFolder)/Modules/Bannerlord.Diplomacy/bin/Win64_Shipping_Client/Bannerlord.Diplomacy.1.2.10.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+    </ItemGroup>
+
+
+</Project>

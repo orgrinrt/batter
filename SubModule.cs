@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Xml;
 using Batter.Core.Behaviours;
@@ -14,9 +16,9 @@ using TaleWorlds.ObjectSystem;
 namespace Batter.Core;
 
 public class SubModule : MBSubModuleBase {
-    private const String MOD_NAME = "Batter";
-    private static Boolean _logInitialized;
-    private static readonly String MOD_NAME_LOWER = SubModule.MOD_NAME.ToLower();
+    private const string MOD_NAME = "Batter";
+    private static bool _logInitialized;
+    private static readonly string MOD_NAME_LOWER = SubModule.MOD_NAME.ToLower();
 
     protected override void OnSubModuleLoad() {
         BatterLog.Hr(nameof(SubModule.OnSubModuleLoad) + " START");
@@ -50,7 +52,7 @@ public class SubModule : MBSubModuleBase {
         this.TryPatch(harmony, typeof(TournamentCachePossibleEliteRewardItemsPatch));
 
 
-        Action<String, Action> patchRunner = (name, apply)
+        Action<string, Action> patchRunner = (name, apply)
             => this.TryPatch(harmony, name, apply);
 
         // patch all roster getters, logging each one uniformly:
@@ -101,8 +103,8 @@ public class SubModule : MBSubModuleBase {
         var mgr = MBObjectManager.Instance;
         foreach (var f in typeof(MBObjectManager)
                      .GetFields(BindingFlags.NonPublic | BindingFlags.Instance))
-            if (typeof(IDictionary<String, XmlDocument>).IsAssignableFrom(f.FieldType)) {
-                if (f.GetValue(mgr) is not IDictionary<String, XmlDocument> dict) continue;
+            if (typeof(IDictionary<string, XmlDocument>).IsAssignableFrom(f.FieldType)) {
+                if (f.GetValue(mgr) is not IDictionary<string, XmlDocument> dict) continue;
                 foreach (var key in dict.Keys)
                     InformationManager.DisplayMessage(
                         new($"[XML Cache] key: {key}"));
@@ -120,7 +122,7 @@ public class SubModule : MBSubModuleBase {
         }
     }
 
-    private void TryPatch(Harmony harmony, String patchName, Action apply) {
+    private void TryPatch(Harmony harmony, string patchName, Action apply) {
         try {
             apply();
             BatterLog.Info($"✅ Patched: {patchName}");
