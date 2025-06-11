@@ -1,56 +1,62 @@
 namespace Batter.Utils.Builders;
 
+/// <summary>
+///     Represents a type that supports flag-based operations.
+/// </summary>
+/// <typeparam name="TFlags">The enum type used for flags.</typeparam>
 public interface IFlaggable<TFlags>
     where TFlags : Enum {
-    static readonly TFlags EMPTY = default;
-    internal TFlags Flags { get; set; }
+    /// <summary>
+    ///     Gets or sets the flags associated with this instance.
+    /// </summary>
+    TFlags Flags { get; set; }
 
-    TFlags GetFlags() {
-        return this.Flags;
-    }
+    /// <summary>
+    ///     Gets the current flags.
+    /// </summary>
+    /// <returns>The current flags.</returns>
+    TFlags GetFlags();
 
-    bool HasFlag(TFlags flag) {
-        return (Convert.ToInt32(this.Flags) & Convert.ToInt32(flag)) == Convert.ToInt32(flag);
-    }
+    /// <summary>
+    ///     Determines whether this instance has the specified flag.
+    /// </summary>
+    /// <param name="flag">The flag to check.</param>
+    /// <returns>True if the flag is set; otherwise, false.</returns>
+    bool HasFlag(TFlags flag);
 
-    bool HasFlags(params TFlags[]? flags) {
-        if (flags == null || flags.Length == 0)
-            return true;
+    /// <summary>
+    ///     Determines whether this instance has all the specified flags.
+    /// </summary>
+    /// <param name="flags">The flags to check.</param>
+    /// <returns>True if all flags are set; otherwise, false.</returns>
+    bool HasFlags(params TFlags[]? flags);
 
-        var mask = flags.Aggregate(0, (current, f) => current | Convert.ToInt32(f));
-        return (Convert.ToInt32(this.Flags) & mask) == mask;
-    }
+    /// <summary>
+    ///     Adds the specified flag to this instance.
+    /// </summary>
+    /// <param name="flag">The flag to add.</param>
+    void AddFlag(TFlags flag);
 
-    void AddFlag(TFlags flag) {
-        if (this.HasFlag(flag))
-            return;
+    /// <summary>
+    ///     Adds the specified flags to this instance.
+    /// </summary>
+    /// <param name="flags">The flags to add.</param>
+    void AddFlags(params TFlags[]? flags);
 
-        this.Flags = (TFlags)Convert.ChangeType(Convert.ToInt32(this.Flags) | Convert.ToInt32(flag), typeof(TFlags));
-    }
+    /// <summary>
+    ///     Removes the specified flag from this instance.
+    /// </summary>
+    /// <param name="flag">The flag to remove.</param>
+    void RemoveFlag(TFlags flag);
 
-    void AddFlags(params TFlags[]? flags) {
-        if (flags == null || flags.Length == 0)
-            return;
+    /// <summary>
+    ///     Removes the specified flags from this instance.
+    /// </summary>
+    /// <param name="flags">The flags to remove.</param>
+    void RemoveFlags(params TFlags[]? flags);
 
-        foreach (var flag in flags) this.AddFlag(flag);
-    }
-
-
-    void RemoveFlag(TFlags flag) {
-        if (!this.HasFlag(flag))
-            return;
-
-        this.Flags = (TFlags)Convert.ChangeType(Convert.ToInt32(this.Flags) & ~Convert.ToInt32(flag), typeof(TFlags));
-    }
-
-    void RemoveFlags(params TFlags[]? flags) {
-        if (flags == null || flags.Length == 0)
-            return;
-
-        foreach (var flag in flags) this.RemoveFlag(flag);
-    }
-
-    void ClearFlags() {
-        this.Flags = IFlaggable<TFlags>.EMPTY;
-    }
+    /// <summary>
+    ///     Clears all flags from this instance.
+    /// </summary>
+    void ClearFlags();
 }

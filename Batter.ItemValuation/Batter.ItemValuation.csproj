@@ -20,4 +20,11 @@
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     </PropertyGroup>
 
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+        <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
+        <DebugSymbols>true</DebugSymbols>
+        <DebugType>pdbonly</DebugType>
+        <DocumentationFile>bin\Release\net6.0\Batter.ItemValuation.xml</DocumentationFile>
+    </PropertyGroup>
+
 </Project>
