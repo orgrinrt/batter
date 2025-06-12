@@ -1,9 +1,13 @@
+#region
+
 using System.Reflection;
 using Batter.Core.Utils;
 using HarmonyLib;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.Core;
+
+#endregion
 
 namespace Batter.Core.Patches;
 
@@ -28,7 +32,7 @@ public static class TownMarketDataGetPricePatch {
         if ( /*itemRosterElement.IsEmpty
         || */itemRosterElement.IsInvalid()
              || itemRosterElement.Equals(default(EquipmentElement))
-             || (itemRosterElement.Item == null && itemRosterElement.CosmeticItem == null) // no ItemObject
+             || (itemRosterElement.Item == null && itemRosterElement.CosmeticItem == null) // no IItemObject
             /*|| itemRosterElement.Item.WeaponComponent == null */ // example of deeper null
            ) {
             BatterLog.Error("[SafePrice] Skipping GetPrice for truly invalid element — dumping props:");

@@ -1,3 +1,5 @@
+#region
+
 using System;
 using System.Reflection;
 using Batter.Core.Utils;
@@ -5,6 +7,8 @@ using HarmonyLib;
 using TaleWorlds.CampaignSystem.CampaignBehaviors;
 using TaleWorlds.CampaignSystem.Settlements.Workshops;
 using TaleWorlds.Core;
+
+#endregion
 
 // for EquipmentElement
 // for Workshop
@@ -28,7 +32,7 @@ public static class WorkshopsCampaignBehaviorProduceAnOutputToTownPatch {
         if ( /*itemRosterElement.IsEmpty
             || */outputItem.IsInvalid()
                  || outputItem.Equals(default(EquipmentElement))
-                 || (outputItem.Item == null && outputItem.CosmeticItem == null) // no ItemObject
+                 || (outputItem.Item == null && outputItem.CosmeticItem == null) // no IItemObject
             /*|| itemRosterElement.Item.WeaponComponent == null */ // example of deeper null
            ) {
             BatterLog.Error(

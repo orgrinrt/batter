@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <IsPackable>false</IsPackable>
+        <Configurations>Debug;Release</Configurations>
+        <!-- <RuntimeIdentifier>osx-arm64</RuntimeIdentifier> --> <!-- Removed for broader compatibility -->
+        <PlatformTarget>AnyCPU</PlatformTarget>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)'=='Release'">
+        <SkipTests>true</SkipTests>
+        <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
+        <DebugSymbols>true</DebugSymbols>
+        <DebugType>pdbonly</DebugType>
+        <DocumentationFile>bin\Release\net6.0\Batter.ItemValuation.Tests.xml</DocumentationFile>
+    </PropertyGroup>
+
+    <!-- Common test packages -->
+    <ItemGroup>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.5.0"/>
+        <PackageReference Include="NUnit" Version="3.13.3"/>
+        <PackageReference Include="NUnit3TestAdapter" Version="4.4.2"/>
+        <PackageReference Include="NUnit.Analyzers" Version="3.6.1"/>
+        <PackageReference Include="coverlet.collector" Version="3.2.0"/>
+        <PackageReference Include="Moq" Version="4.18.4"/>
+    </ItemGroup>
+
+    <!-- Conditional dependencies for Bannerlord types -->
+    <ItemGroup Condition="'$(OS)' == 'Windows_NT'">
+        <!-- On Windows, use the real reference assemblies -->
+        <PackageReference Include="Bannerlord.ReferenceAssemblies.Core" Version="1.2.12.66233"/>
+        <!-- Add other Bannerlord.ReferenceAssemblies.* if needed -->
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Batter.ItemValuation\Batter.ItemValuation.csproj"/>
+    </ItemGroup>
+
+</Project>

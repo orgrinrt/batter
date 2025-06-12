@@ -1,7 +1,7 @@
 #region
 
 using System.Collections.Concurrent;
-using TaleWorlds.Core;
+using Batter.ItemValuation.TotalEvaluationMode;
 
 #endregion
 
@@ -17,8 +17,8 @@ namespace Batter.ItemValuation;
 /// <example>
 /// <code>
 /// // Create an item evaluation from a game item object
-/// var itemObject = new ItemObject("empire_sword_1_t2");
-/// var evaluatedItem = new EvaluatedItem(ref itemObject);
+/// var itemObject = new IItemObject("empire_sword_1_t2");
+/// var evaluatedItem = new EvaluatedItem(ref IItemObject);
 /// 
 /// // Add properties to the item
 /// evaluatedItem.AddProp(new WeightProperty("Weight", 1.5f));
@@ -37,7 +37,7 @@ public class EvaluatedItem {
     /// </summary>
     /// <param name="itemObject">The game item object to evaluate.</param>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="itemObject"/> is null.</exception>
-    public EvaluatedItem(ref ItemObject itemObject) {
+    public EvaluatedItem(ref IItemObject itemObject) {
         this.ItemObject = itemObject;
         this.Id = itemObject.StringId;
         this._propsByName = new();
@@ -47,7 +47,7 @@ public class EvaluatedItem {
     /// <summary>
     /// Gets the game item object that this evaluation is based on.
     /// </summary>
-    public ItemObject ItemObject { get; }
+    public IItemObject ItemObject { get; }
 
     /// <summary>
     /// Gets the unique identifier of the item.

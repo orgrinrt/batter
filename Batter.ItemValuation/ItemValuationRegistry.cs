@@ -2,7 +2,6 @@
 
 using System.Collections.Concurrent;
 using Batter.ItemValuation.TotalEvaluationMode;
-using TaleWorlds.Core;
 
 #endregion
 
@@ -152,10 +151,11 @@ public class ItemValuationRegistry {
 
         // Try to create a new valuation
         try {
-            var itemObject = new ItemObject(itemId);
-            valuation = new(ref itemObject);
-            this._valuations.Value[itemId] = valuation;
-            return true;
+            // var itemObject = new TItemObject(itemId);
+            // valuation = new(ref itemObject);
+            // this._valuations.Value[itemId] = valuation;
+            // return true;
+            return false; // FIXME: a way to do the above intent in practice
         }
         catch (Exception ex) when (
             ex is ArgumentException ||  // Invalid itemId

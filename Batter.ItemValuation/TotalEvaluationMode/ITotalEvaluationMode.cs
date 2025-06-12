@@ -1,6 +1,10 @@
+#region
+
 using System.Collections.Concurrent;
 
-namespace Batter.ItemValuation;
+#endregion
+
+namespace Batter.ItemValuation.TotalEvaluationMode;
 
 /// <summary>
 /// Defines an interface for total evaluation modes that calculate a final value from a collection of properties.

@@ -1,20 +1,25 @@
+#region
+
+using System;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
+
+#endregion
 
 namespace Batter.Core.Models;
 
 public class OrgrinsItemValueModel : DefaultItemValueModel {
-    public override int CalculateValue(ItemObject item) {
+    public override int CalculateValue(IItemObject item) {
         var vanillaValue = base.CalculateValue(item);
 
         // Get computed price from registry using direct item reference
-        var computedPrice = ItemValuationRegistry.
+        var computedPrice = 0; //ItemValuationRegistry.
 
         // Combine: computed price acts as override/adjustment
         return Math.Max(0, vanillaValue + computedPrice);
     }
 
-    public override float CalculateTier(ItemObject item) {
+    public override float CalculateTier(IItemObject item) {
         var vanillaTier = base.CalculateTier(item);
 
         if (ComputedPriceRegistry.Instance.TryGetPrice(item, out var price)) {

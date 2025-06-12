@@ -11,7 +11,13 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Bannerlord.ReferenceAssemblies.Core" Version="1.2.12.66233"/>
+        <PackageReference Include="Bannerlord.ReferenceAssemblies.Core" Version="1.2.12.66233">
+            <PrivateAssets>all</PrivateAssets> <!-- Add this line -->
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Remove="Builders\PropertyPredicateExtensions.cs"/>
     </ItemGroup>
 
     <PropertyGroup>

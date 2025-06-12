@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <Version>0.0.1</Version>
-        <TargetFramework>net472</TargetFramework>
+        <TargetFrameworks>net472;net6.0</TargetFrameworks>
         <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
         <LangVersion>latest</LangVersion>
         <Nullable>enable</Nullable>
@@ -31,8 +31,7 @@
         </PackageReference>
         <PackageReference Include="Bannerlord.UIExtenderEx" Version="2.12.0"/>
         <PackageReference Include="Bannerlord.MCM" Version="5.10.2"/>
-        <PackageReference Include="Bannerlord.ReferenceAssemblies" Version="1.2.12.66233" />
-
+        <PackageReference Include="Bannerlord.ReferenceAssemblies" Version="1.2.12.66233"/>
     </ItemGroup>
 
     <ItemGroup>

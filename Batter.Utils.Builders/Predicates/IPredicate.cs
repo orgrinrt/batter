@@ -1,24 +1,25 @@
 namespace Batter.Utils.Builders.Predicates;
 
 /// <summary>
-///     Represents a predicate that can evaluate to a boolean result.
+/// Represents a predicate that can evaluate to a boolean result.
 /// </summary>
-/// <typeparam name="T">The type of object the predicate evaluates.</typeparam>
-public interface IPredicate<in T> {
+/// <remarks>
+/// This interface is the foundation for the predicate system.
+/// For most common usage scenarios, consider using the fluent API
+/// available through the <see cref="Predicates"/> class.
+/// 
+/// Example:
+/// <code>
+/// bool result = Predicates
+///     .When(item).Matches(i =&gt; i.Value &gt; 100)
+///     .AndAlso()
+///     .When(item).Matches(i =&gt; i.Weight &lt; 5.0f)
+///     .Evaluate();
+/// </code>
+/// </remarks>
+public interface IPredicate {
     /// <summary>
-    ///     Evaluates the predicate against the specified value.
-    /// </summary>
-    /// <param name="value">The value to evaluate.</param>
-    /// <returns>True if the predicate is satisfied; otherwise, false.</returns>
-    bool Evaluate(T value);
-}
-
-/// <summary>
-///     Non-generic predicate for simple boolean evaluation.
-/// </summary>
-public interface IPredicate : IPredicate<object> {
-    /// <summary>
-    ///     Evaluates the predicate without requiring input.
+    /// Evaluates the predicate.
     /// </summary>
     /// <returns>True if the predicate is satisfied; otherwise, false.</returns>
     bool Evaluate();
