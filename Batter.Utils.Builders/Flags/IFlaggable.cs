@@ -1,4 +1,4 @@
-namespace Batter.Utils.Builders;
+namespace Batter.Utils.Builders.Flags;
 
 /// <summary>
 ///     Represents a type that supports flag-based operations.

@@ -1,17 +1,17 @@
-namespace Batter.Utils.Builders;
+namespace Batter.Utils.Builders.Flags;
 
 /// <summary>
 ///     Base implementation for types that support flag-based operations.
 /// </summary>
 /// <typeparam name="TFlags">The enum type used for flags.</typeparam>
-public abstract class FlaggableBase<TFlags> : IFlaggable<TFlags>
+public abstract class Flaggable<TFlags> : IFlaggable<TFlags>
     where TFlags : Enum {
     private static readonly TFlags _EMPTY = default!; // should be default of enum, i.e integer, not null
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="FlaggableBase{TFlags}"/> class.
+    /// Initializes a new instance of the <see cref="Flaggable{TFlags}"/> class.
     /// </summary>
-    protected FlaggableBase() => this.Flags = FlaggableBase<TFlags>._EMPTY;
+    protected Flaggable() => this.Flags = Flaggable<TFlags>._EMPTY;
 
     /// <summary>
     /// Gets or sets the flags currently applied to this instance.
@@ -96,6 +96,6 @@ public abstract class FlaggableBase<TFlags> : IFlaggable<TFlags>
     /// Clears all flags from this instance.
     /// </summary>
     public void ClearFlags() {
-        this.Flags = FlaggableBase<TFlags>._EMPTY;
+        this.Flags = Flaggable<TFlags>._EMPTY;
     }
 }

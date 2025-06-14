@@ -17,7 +17,7 @@ namespace Batter.Utils.Builders.Predicates;
 ///     .Evaluate();
 /// </code>
 /// </remarks>
-public interface IPredicate {
+public interface IPredicate : IFluentApiMethods<IPredicate> {
     /// <summary>
     /// Evaluates the predicate.
     /// </summary>

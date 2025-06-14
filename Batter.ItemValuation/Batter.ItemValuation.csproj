@@ -16,10 +16,6 @@
         </PackageReference>
     </ItemGroup>
 
-    <ItemGroup>
-        <Compile Remove="Builders\PropertyPredicateExtensions.cs"/>
-    </ItemGroup>
-
     <PropertyGroup>
         <AnalysisLevel>latest</AnalysisLevel>
         <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>

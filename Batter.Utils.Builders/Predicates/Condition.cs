@@ -1,10 +1,4 @@
-#region
-
-using Batter.Utils.Builders.Predicates;
-
-#endregion
-
-namespace Batter.Utils.Builders;
+namespace Batter.Utils.Builders.Predicates;
 
 /// <summary>
 /// 
@@ -17,6 +11,18 @@ public class Condition {
     /// </summary>
     /// <param name="condition"></param>
     public Condition(Func<bool> condition) => this._condition = condition;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="predicate"></param>
+    public Condition(Fn predicate) => this._condition = predicate;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="predicate"></param>
+    public Condition(Const predicate) => this._condition = () => predicate;
 
     /// <summary>
     /// 
@@ -76,7 +82,7 @@ public class Condition {
     /// </summary>
     /// <param name="predicate"></param>
     /// <returns></returns>
-    public static implicit operator Condition(FuncPredicate predicate) {
+    public static implicit operator Condition(Fn predicate) {
         return new(predicate.Evaluate);
     }
 
@@ -85,7 +91,7 @@ public class Condition {
     /// </summary>
     /// <param name="condition"></param>
     /// <returns></returns>
-    public static implicit operator FuncPredicate(Condition condition) {
+    public static implicit operator Fn(Condition condition) {
         return new(condition._condition);
     }
 
@@ -94,7 +100,7 @@ public class Condition {
     /// </summary>
     /// <param name="predicate"></param>
     /// <returns></returns>
-    public static implicit operator Condition(NotPredicate predicate) {
+    public static implicit operator Condition(Not predicate) {
         return new(predicate.Evaluate);
     }
 
@@ -103,9 +109,10 @@ public class Condition {
     /// </summary>
     /// <param name="condition"></param>
     /// <returns></returns>
-    public static implicit operator NotPredicate(Condition condition) {
+    public static implicit operator Not(Condition condition) {
         // FIXME: this is a little bit of a hack, needs optimising since that's not efficient
-        return new(new FuncPredicate(() => !condition._condition()));
+        // TODO: also this might not actually work as expected if condition is already a Not condition
+        return new(new Fn(() => !condition._condition()));
     }
 
     /// <summary>
@@ -113,7 +120,7 @@ public class Condition {
     /// </summary>
     /// <param name="predicate"></param>
     /// <returns></returns>
-    public static implicit operator Condition(ConstantPredicate predicate) {
+    public static implicit operator Condition(Const predicate) {
         return new(predicate.Evaluate);
     }
 
@@ -122,7 +129,7 @@ public class Condition {
     /// </summary>
     /// <param name="condition"></param>
     /// <returns></returns>
-    public static implicit operator ConstantPredicate(Condition condition) {
+    public static implicit operator Const(Condition condition) {
         return new(condition._condition());
     }
 }
