@@ -111,11 +111,11 @@ public abstract class DynBuilder : IBuilder<DynBuildable, DynBuilder, DynStorage
         }
 
         if (resultType == null) {
-            Console.WriteLine($"DynBuilder: No matching interface found for {thisType.FullName}. Trying base type");
+            // Console.WriteLine($"DynBuilder: No matching interface found for {thisType.FullName}. Trying base type");
             // If we didn't find a matching interface, try the base type
             Type? baseType = thisType.BaseType;
             if (baseType == null) Console.WriteLine($"DynBuilder: No basetype found for {thisType.FullName}");
-            Console.WriteLine($"DynBuilder: Base type is {baseType?.FullName}");
+            // Console.WriteLine($"DynBuilder: Base type is {baseType?.FullName}");
 
             if (baseType!.IsGenericType && baseType.GetGenericTypeDefinition() == typeof(DynBuilder<,>)) {
                 resultType = baseType.GetGenericArguments()[0];

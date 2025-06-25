@@ -24,6 +24,12 @@ public static class DynExtensions {
         return builder.Get<TItem, DynBuilder, DynStorage<DynBuilder>, DynCollection<DynKey, object>>(key);
     }
 
+    // NOTE: the below With<TItem> is a good example of what we'd want these helper extensions to do
+    //        basically just make the api less strict and verbose, but still type-safe by conforming
+    //        to the underlying builder api interfaces and their constraints (e.g ensure a cast is valid before
+    //        doing it dynamically! but still allow to do it dynamically and having very lax constraints on this method itself)
+    // TODO: we want to extend this same idea to the other integral methods, such as Remove, Get, Has, etc.
+
     public static DynBuilder With<TItem>(this DynBuilder builder, DynKey key, params object[] ctorArgs)
         where TItem : class {
         if (ctorArgs.Length == 1 && ctorArgs[0] is TItem item) return builder.With(key, item);

@@ -54,9 +54,9 @@ public class DynCollection<TKey, TValue> : IObjCollection,
     /// </summary>
     /// <param name="items">The initial items to add to the collection</param>
     public DynCollection(Dictionary<TKey, TValue> items) {
-        if (items != null)
-            foreach (KeyValuePair<TKey, TValue> kvp in items)
-                this._items[kvp.Key] = kvp.Value;
+        if (items != null) {
+            foreach (KeyValuePair<TKey, TValue> kvp in items) this._items[kvp.Key] = kvp.Value;
+        }
     }
 
     /// <inheritdoc />
@@ -73,7 +73,6 @@ public class DynCollection<TKey, TValue> : IObjCollection,
                 $"Cannot convert DynCollection<{typeof(TKey).Name}, {typeof(TValue).Name}> to DynCollection<{typeof(TKey1).Name}, {typeof(TValue1).Name}>.");
         }
 
-        // NOTE: same as above, we return the original dictionary for mutable access for now...
         return this._items as Dictionary<TKey1, TValue1> ??
                throw new InvalidOperationException(
                    $"Cannot cast DynCollection<{typeof(TKey).Name}, {typeof(TValue).Name}> to Dictionary<{typeof(TKey1).Name}, {typeof(TValue1).Name}>.");

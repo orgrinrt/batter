@@ -36,6 +36,8 @@ public sealed class DynBuildable : IBuildable<DynBuildable, DynBuilder, DynStora
 
     public TResult As<TResult>()
         where TResult : DynBuildable<TResult> {
+        // TODO: more intelligent casting and safeguards, as well as some improvements so that we can
+        //       make the constraints a little less strict, but still remain type-safe (see the DynExtensions api for example of this concept)
         return (TResult)this.Inner;
     }
 
