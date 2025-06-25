@@ -1,255 +1,389 @@
 #region
 
-using Batter.Utils.Builders.Predicates;
+using System.Diagnostics.CodeAnalysis;
 
 #endregion
 
 namespace Batter.Utils.Builders;
 
 /// <summary>
-/// 
+///     Base container interface that provides strongly-typed collection management.
+///     Provides methods for accessing and managing typed collections of properties.
 /// </summary>
-/// <typeparam name="TThisContainer">self, the container..</typeparam>
-/// <typeparam name="TItem">The contained type.</typeparam>
-/// <typeparam name="TItemKeyType"></typeparam>
-public interface IContainer<out TThisContainer,  TItem,  TItemKeyType>
-    : IContainerFluentApi<TThisContainer, TItem, TItemKeyType>,
-        IEnumerable<KeyValuePair<TItemKeyType, TItem>>
-    where TThisContainer : IContainer<TThisContainer, TItem, TItemKeyType> { }
+/// <typeparam name="TThis">The implementing container type (CRTP pattern)</typeparam>
+/// <typeparam name="TStorage">The storage type that manages collections</typeparam>
+/// <typeparam name="TCollection">The collection type used to store properties</typeparam>
+public interface IContainer<TThis, out TStorage, out TCollection> : IIsContainer
+    where TThis : class, IContainer<TThis, TStorage, TCollection>
+    where TStorage : class, IContainerStorage<TStorage, TThis, TCollection>, new()
+    where TCollection : class, IObjCollection {
 
-/// <summary>
-/// 
-/// </summary>
-/// <typeparam name="TThisContainer"></typeparam>
-/// <typeparam name="TItem"></typeparam>
-/// <typeparam name="TItemKeyType"></typeparam>
-public interface
-    IPropContainer<out TThisContainer,  TItem,  TItemKeyType> : IContainer<TThisContainer, TItem, TItemKeyType>
-    where TThisContainer : IPropContainer<TThisContainer, TItem, TItemKeyType>
-    where TItem : IProp<TThisContainer, TItem, TItemKeyType>
-    where TItemKeyType : IEquatable<TItemKeyType> { }
+    internal TStorage    Storage    { get; }
+    internal TCollection Collection => this.Storage.Collection;
 
-/// <summary>
-/// 
-/// </summary>
-/// <typeparam name="TThisContainer"></typeparam>
-/// <typeparam name="TItemType"></typeparam>
-/// <typeparam name="TItemKeyType"></typeparam>
-public  interface IContainerFluentApi<out TThisContainer, TItemType,  TItemKeyType>
-    where TThisContainer : IContainer<TThisContainer, TItemType, TItemKeyType> {
-    /// <summary>
-    /// 
-    /// </summary>
-    bool IsEmpty { get; }
+    #region "Collection Management"
 
     /// <summary>
-    /// 
+    ///     Clears all items from the collection.
     /// </summary>
-    int Count { get; }
+    /// <returns>The container instance for method chaining</returns>
+    TThis Clear() {
+        this.Collection.Raw().Clear();
+
+        return (TThis)this;
+    }
+
+    #endregion
+
+
+    #region "Property Accessors"
 
     /// <summary>
-    /// 
+    ///     Gets a property of the specified type using the given key.
     /// </summary>
-    /// <returns></returns>
-    IEnumerable<TItemType> GetAll();
+    /// <param name="key">The key to look up the property</param>
+    /// <typeparam name="TProp">The property type</typeparam>
+    /// <returns>The property associated with the key</returns>
+    TProp GetProp<TProp>(DynKey key)
+        where TProp : IProp<TThis, TProp, IValidKey> {
+        return (TProp)this.Collection.Raw()[key];
+    }
 
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="predicate"></param>
-    /// <returns></returns>
-    IEnumerable<TItemType> Get(IPredicate predicate);
+    TProp GetProp<TKey, TProp>(TKey key)
+        where TKey : notnull, IValidKey<TKey>
+        where TProp : IProp<TThis, TProp, IValidKey<TKey>> {
+        return this.GetProp<TProp>(new(key));
+    }
 
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="key"></param>
-    /// <returns></returns>
-    TItemType Get(TItemKeyType key);
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="key"></param>
-    /// <param name="item"></param>
-    /// <returns></returns>
-    TThisContainer Add(TItemKeyType key, TItemType item);
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="item"></param>
-    /// <returns></returns>
-    TThisContainer Add(KeyValuePair<TItemKeyType, TItemType> item);
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="item"></param>
-    /// <returns></returns>
-    TThisContainer Add(Tuple<TItemKeyType, TItemType> item);
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="items"></param>
-    /// <returns></returns>
-    TThisContainer Add(params Tuple<TItemKeyType, TItemType>[] items);
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="items"></param>
-    /// <returns></returns>
-    TThisContainer Add(params KeyValuePair<TItemKeyType, TItemType>[] items);
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="item"></param>
-    /// <returns></returns>
-    TThisContainer Remove(TItemType item);
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="key"></param>
-    /// <returns></returns>
-    TThisContainer Remove(TItemKeyType key);
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <returns></returns>
-    TThisContainer Clear();
-}
-
-/// <summary>
-/// 
-/// </summary>
-public static partial class IContainerFluentApiExtensions {
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="self"></param>
-    /// <param name="predicate"></param>
-    /// <returns></returns>
-    public static bool Any<TThisContainer, TItemType, TItemKeyType>(
-        this IContainerFluentApi<TThisContainer, TItemType, TItemKeyType> self, IPredicate predicate)
-        where TThisContainer : IContainer<TThisContainer, TItemType, TItemKeyType> {
-        // FIXME: a hack that probably needs revisiting to optimise, this is very much not efficient
-        return (self as IEnumerable<KeyValuePair<TItemKeyType, TItemType>> ??
-                Array.Empty<KeyValuePair<TItemKeyType, TItemType>>())
-            .Where(predicate as Fn as Func<KeyValuePair<TItemKeyType, TItemType>, bool> ??
-                   throw new InvalidOperationException()).Any();
+    TProp GetProp<TProp, T>(IValidKey<T> key)
+        where TProp : IProp<TThis, TProp, IValidKey<T>>
+        where T : class, IValidKey<T>, IValidKey {
+        return new DynKey(key) is T dynKey
+            ? this.GetProp<T, TProp>(dynKey)
+            : this.GetProp<T, TProp>(key as T ?? throw new InvalidOperationException());
     }
 
     /// <summary>
-    /// 
+    ///     Attempts to get a property of the specified type using the given key.
     /// </summary>
-    /// <param name="self"></param>
-    /// <param name="predicate"></param>
-    /// <returns></returns>
-    public static bool Any<TThisContainer, TItemType, TItemKeyType>(
-        this IContainerFluentApi<TThisContainer, TItemType, TItemKeyType> self,
-        Func<TItemKeyType, TItemType, bool> predicate)
-        where TThisContainer : IContainer<TThisContainer, TItemType, TItemKeyType> {
-        // FIXME: a hack that probably needs revisiting to optimise, this is very much not efficient
-        return self.Any(new Fn(predicate as Func<object, object, bool> ?? throw new InvalidOperationException()));
-    }
+    /// <param name="key">The key to look up the property</param>
+    /// <param name="prop">
+    ///     When this method returns, contains the property associated with the specified key,
+    ///     if the key is found; otherwise, the default value for the type of the prop parameter.
+    /// </param>
+    /// <typeparam name="TProp">The property type</typeparam>
+    /// <returns>true if the container contains a property with the specified key; otherwise, false.</returns>
+    bool TryGetProp<TProp>(DynKey key, out TProp? prop)
+        where TProp : IProp<TThis, TProp, IValidKey> {
+        if (this.Collection.Raw().TryGetValue(key, out object? value) && value is TProp typedValue) {
+            prop = typedValue;
 
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="self"></param>
-    /// <param name="predicate"></param>
-    /// <exception cref="ArgumentNullException"></exception>
-    /// <returns></returns>
-    public static bool All<TThisContainer, TItemType, TItemKeyType>(
-        this IContainerFluentApi<TThisContainer, TItemType, TItemKeyType> self, IPredicate predicate)
-        where TThisContainer : IContainer<TThisContainer, TItemType, TItemKeyType> {
-        return (self as IEnumerable<KeyValuePair<TItemKeyType, TItemType>> ??
-                Array.Empty<KeyValuePair<TItemKeyType, TItemType>>()).All(
-            predicate as Fn as Func<KeyValuePair<TItemKeyType, TItemType>, bool> ??
-            throw new ArgumentNullException());
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="self"></param>
-    /// <param name="predicate"></param>
-    /// <returns></returns>
-    public static bool None<TThisContainer, TItemType, TItemKeyType>(
-        this IContainerFluentApi<TThisContainer, TItemType, TItemKeyType> self, IPredicate predicate)
-        where TThisContainer : IContainer<TThisContainer, TItemType, TItemKeyType> {
-        return !self.Any(predicate);
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="self"></param>
-    /// <param name="item"></param>
-    /// <returns></returns>
-    public static bool Contains<TThisContainer, TItemType, TItemKeyType>(
-        this IContainerFluentApi<TThisContainer, TItemType, TItemKeyType> self, TItemType item)
-        where TThisContainer : IContainer<TThisContainer, TItemType, TItemKeyType>
-        where TItemType : IEquatable<TItemType> {
-        if (self is null)
-            throw new ArgumentNullException(nameof(self), "Container cannot be null.");
-        if (item is null)
-            throw new ArgumentNullException(nameof(item), "Item cannot be null.");
-        try {
-            var match = self.GetAll().FirstOrDefault(i => i.Equals(item));
-            return match != null;
-        }
-        catch (KeyNotFoundException) {
-            // FIXME: there's probably a better exception to catch, since self.GetAll() likely won't throw this
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="key"></param>
-    /// <param name="self"></param>
-    /// <returns></returns>
-    public static bool ContainsKey<TThisContainer, TItemType, TItemKeyType>(
-        this IContainerFluentApi<TThisContainer, TItemType, TItemKeyType> self, TItemKeyType key)
-        where TThisContainer : IContainer<TThisContainer, TItemType, TItemKeyType> {
-        if (self is null)
-            throw new ArgumentNullException(nameof(self), "Container cannot be null.");
-        if (key is null)
-            throw new ArgumentNullException(nameof(key), "Key cannot be null.");
-        try {
-            self.Get(key);
             return true;
         }
-        catch (KeyNotFoundException) {
-            return false;
-        }
+
+        prop = default;
+
+        return false;
     }
+
+    bool TryGetProp<TKey, TProp>(TKey key, out TProp? prop)
+        where TKey : notnull, IValidKey<TKey>, IValidKey
+        where TProp : IProp<TThis, TProp, IValidKey<TKey>> {
+        return this.TryGetProp(new(key), out prop);
+    }
+
+    bool TryGetProp<TProp, T>(IValidKey<T> key, out TProp? prop)
+        where TProp : IProp<TThis, TProp, IValidKey<T>>
+        where T : class, IValidKey<T>, IValidKey {
+        return new DynKey(key) is T dynKey
+            ? this.TryGetProp(dynKey,                                            out prop)
+            : this.TryGetProp(key as T ?? throw new InvalidOperationException(), out prop);
+    }
+
+    #endregion
+
+    #region "Item Accessors"
+
+    /// <summary>
+    ///     Gets an item of the specified type using the given key.
+    /// </summary>
+    /// <param name="key">The key to look up the item</param>
+    /// <typeparam name="TItem">The item type</typeparam>
+    /// <returns>The item associated with the key</returns>
+    TItem GetObj<TItem>(DynKey key) { return (TItem)this.Collection.Raw()[key]; }
+
+    TItem GetObj<TKey, TItem>(TKey key)
+        where TKey : notnull, IEquatable<TKey>, IValidKey<TKey> {
+        return this.GetObj<TItem>(new(key));
+    }
+
+    TItem GetObj<TItem>(IValidKey key) { return this.GetObj<TItem>(new(key)); }
+
+    /// <summary>
+    ///     Attempts to get an item of the specified type using the given key.
+    /// </summary>
+    /// <param name="key">The key to look up the item</param>
+    /// <param name="item">
+    ///     When this method returns, contains the item associated with the specified key,
+    ///     if the key is found; otherwise, the default value for the type of the item parameter.
+    /// </param>
+    /// <typeparam name="TItem">The item type</typeparam>
+    /// <returns>true if the container contains an item with the specified key; otherwise, false.</returns>
+    bool TryGetObj<TItem>(DynKey key, out TItem? item) {
+        if (this.Collection.Raw().TryGetValue(key, out object? value) && value is TItem typedValue) {
+            item = typedValue;
+
+            return true;
+        }
+
+        item = default;
+
+        return false;
+    }
+
+    bool TryGetObj<TKey, TItem>(TKey key, out TItem? item)
+        where TKey : notnull, IEquatable<TKey>, IValidKey<TKey> {
+        return this.TryGetObj(new(key), out item);
+    }
+
+    bool TryGetObj<TItem>(IValidKey key, out TItem? item) { return this.TryGetObj(new(key), out item); }
+
+    #endregion
+
+    #region "Property Setters"
+
+    /// <summary>
+    ///     Sets a property with the specified key and value.
+    /// </summary>
+    /// <param name="key">The key to associate with the property</param>
+    /// <param name="value">The property value to set</param>
+    /// <typeparam name="TProp">The property type</typeparam>
+    /// <returns>The container instance for method chaining</returns>
+    TThis WithProp<TProp>(DynKey key, TProp value)
+        where TProp : IProp<TThis, TProp, IValidKey> {
+        this.Collection.Raw()[key] = value;
+
+        return (TThis)this;
+    }
+
+    TThis WithProp<TKey, TProp>(TKey key, TProp value)
+        where TKey : notnull, IEquatable<TKey>, IValidKey<TKey>
+        where TProp : IProp<TThis, TProp, IValidKey<TKey>> {
+        return this.WithProp(new(key), value);
+    }
+
+    TThis WithProp<TProp>(IValidKey key, TProp value)
+        where TProp : IProp<TThis, TProp, IValidKey> {
+        return this.WithProp(new(key), value);
+    }
+
+    /// <summary>
+    ///     Sets a property with the specified key to its default value.
+    /// </summary>
+    /// <param name="key">The key to associate with the property</param>
+    /// <typeparam name="TProp">The property type</typeparam>
+    /// <returns>The container instance for method chaining</returns>
+    TThis WithDefaultProp<TProp>(DynKey key)
+        where TProp : IProp<TThis, TProp, IValidKey> {
+        return this.WithProp(key, Activator.CreateInstance<TProp>());
+    }
+
+    TThis WithDefaultProp<TKey, TProp>(TKey key)
+        where TKey : notnull, IValidKey<TKey>
+        where TProp : IProp<TThis, TProp, IValidKey<TKey>> {
+        return this.WithDefaultProp<TProp>(new(key));
+    }
+
+    TThis WithDefaultProp<TProp, T>(IValidKey<T> key)
+        where TProp : IProp<TThis, TProp, IValidKey<T>>
+        where T : class, IValidKey<T>, IValidKey {
+        return new DynKey(key) is T dynKey
+            ? this.WithDefaultProp<T, TProp>(dynKey)
+            : this.WithDefaultProp<T, TProp>(key as T ?? throw new InvalidOperationException());
+    }
+
+    #endregion
+
+    #region "Item Setters"
+
+    /// <summary>
+    ///     Sets an item with the specified key and value.
+    /// </summary>
+    /// <param name="key">The key to associate with the item</param>
+    /// <param name="value">The item value to set</param>
+    /// <typeparam name="TItem">The item type</typeparam>
+    /// <returns>The container instance for method chaining</returns>
+    TThis WithObj<TItem>(DynKey key, TItem value) {
+        this.Collection.Raw()[key] = value!;
+
+        return (TThis)this;
+    }
+
+    TThis WithObj<TKey, TItem>(TKey key, TItem value)
+        where TKey : notnull, IEquatable<TKey>, IValidKey<TKey> {
+        return this.WithObj(new(key), value);
+    }
+
+    TThis WithObj<TItem>(IValidKey key, TItem value) { return this.WithObj(new(key), value); }
+
+    /// <summary>
+    ///     Sets an item with the specified key to its default value.
+    /// </summary>
+    /// <param name="key">The key to associate with the item</param>
+    /// <typeparam name="TItem">The item type</typeparam>
+    /// <returns>The container instance for method chaining</returns>
+    TThis WithDefaultObj<TItem>(DynKey key) { return this.WithObj<TItem>(key, default!); }
+
+    TThis WithDefaultObj<TKey, TItem>(TKey key)
+        where TKey : notnull, IEquatable<TKey>, IValidKey<TKey> {
+        return this.WithDefaultObj<TItem>(new(key));
+    }
+
+    TThis WithDefaultObj<TItem>(IValidKey key) { return this.WithDefaultObj<TItem>(new(key)); }
+
+    #endregion
+
+    #region "Removal"
+
+    /// <summary>
+    ///     Removes a property with the specified key.
+    /// </summary>
+    /// <param name="key">The key of the property to remove</param>
+    /// <typeparam name="TProp">The property type</typeparam>
+    /// <returns>The container instance for method chaining</returns>
+    TThis RemoveProp<TProp>(DynKey key)
+        where TProp : IProp<TThis, TProp, IValidKey> {
+        this.Collection.Raw().Remove(key);
+
+        return (TThis)this;
+    }
+
+    TThis RemoveProp<TKey, TProp>(TKey key)
+        where TKey : notnull, IValidKey<TKey>
+        where TProp : IProp<TThis, TProp, IValidKey<TKey>> {
+        // TODO: probably better use instance pooling for DynKeys rather than allocate a new one each time
+        return this.RemoveProp<TProp>(new(key));
+    }
+
+    TThis RemoveProp<TProp, T>(IValidKey<T> key)
+        where TProp : IProp<TThis, TProp, IValidKey<T>>
+        where T : class, IValidKey<T>, IValidKey {
+        // TODO: probably better use instance pooling for DynKeys rather than allocate a new one each time
+        return new DynKey(key) is T dynKey
+            ? this.RemoveProp<T, TProp>(dynKey)
+            : this.RemoveProp<T, TProp>(key as T ?? throw new InvalidOperationException());
+    }
+
+    /// <summary>
+    ///     Removes an item with the specified key.
+    /// </summary>
+    /// <param name="key">The key of the item to remove</param>
+    /// <typeparam name="TItem">The item type</typeparam>
+    /// <returns>The container instance for method chaining</returns>
+    TThis RemoveObj<TItem>(DynKey key) {
+        this.Collection.Raw().Remove(key);
+
+        return (TThis)this;
+    }
+
+    TThis RemoveObj<TKey, TItem>(TKey key)
+        where TKey : notnull, IEquatable<TKey>, IValidKey<TKey> {
+        return this.RemoveObj<TItem>(new(key));
+    }
+
+    TThis RemoveObj<TItem>(IValidKey key) { return this.RemoveObj<TItem>(new(key)); }
+
+    #endregion
+
+    #region Unique Properties
+
+    TProp GetUniqueProp<TProp>()
+        where TProp : IUniqueProp<TThis, TProp> {
+        return (TProp)this.Collection.Raw()[(DynKey)typeof(TProp)];
+    }
+
+    TObj GetUniqueProp<TObj>(Type type) { return (TObj)this.Collection.Raw()[(DynKey)type]; }
+
+
+    bool TryGetUniqueProp<TProp>(out TProp? prop)
+        where TProp : IUniqueProp<TThis, TProp> {
+        if (this.Collection.Raw().TryGetValue((DynKey)typeof(TProp), out object? value) && value is TProp typedValue) {
+            prop = typedValue;
+
+            return true;
+        }
+
+        prop = default;
+
+        return false;
+    }
+
+    TThis WithUniqueProp<TProp>(TProp value)
+        where TProp : IUniqueProp<TThis, TProp> {
+        this.Collection.Raw()[new(typeof(TProp))] = value;
+
+        return (TThis)this;
+    }
+
+    TThis WithUniqueProp<TProp>(Type type, [NotNull] TProp value) {
+        this.Collection.Raw()[new(type)] = value ?? throw new ArgumentNullException(nameof(value));
+
+        return (TThis)this;
+    }
+
+    TThis RemoveUniqueProp<TProp>()
+        where TProp : IUniqueProp<TThis, TProp> {
+        this.Collection.Raw().Remove((DynKey)typeof(TProp));
+
+        return (TThis)this;
+    }
+
+    #endregion
+
 }
 
 /// <summary>
-/// 
+///     Interface for container storage that manages collections of properties.
+///     This provides a way to store and retrieve properties for a specific container type.
 /// </summary>
-public static partial class IContainerFluentApiExtensions {
+/// <typeparam name="TThis">The implementing storage type (CRTP pattern)</typeparam>
+/// <typeparam name="TContainer">The container type this storage serves</typeparam>
+/// <typeparam name="TCollection">The collection type used to store properties</typeparam>
+public interface IContainerStorage<TThis, TContainer, out TCollection>
+    where TContainer : class, IContainer<TContainer, TThis, TCollection>
+    where TCollection : class, IObjCollection
+    where TThis : class, IContainerStorage<TThis, TContainer, TCollection>, new() {
+
     /// <summary>
-    /// 
+    ///     Gets the collection associated with this storage.
     /// </summary>
-    /// <param name="predicate"></param>
-    /// <param name="self"></param>
+    TCollection Collection { get; }
+
+}
+
+/// <summary>
+///     Marker interface for all container types.
+///     This allows for basic type checking and identification of container objects.
+/// </summary>
+public interface IIsContainer { }
+
+/// <summary>
+///     Interface for collections that can provide access to their raw objects.
+/// </summary>
+public interface IObjCollection {
+
+    /// <summary>
+    ///     Gets the raw objects in this collection as a dictionary.
+    /// </summary>
+    /// <returns>A dictionary containing all objects in this collection</returns>
+    Dictionary<DynKey, object> Raw() { return this.Raw<DynKey, object>(); }
+
+    /// <summary>
+    /// </summary>
+    /// <typeparam name="TKey"></typeparam>
+    /// <typeparam name="TValue"></typeparam>
     /// <returns></returns>
-    public static TThisContainer Filter<TThisContainer, TItemType, TItemKeyType>(
-        this IContainerFluentApi<TThisContainer, TItemType, TItemKeyType> self, IPredicate predicate)
-        where TThisContainer : IContainer<TThisContainer, TItemType, TItemKeyType> {
-        // FIXME: not efficient, needs to be optimised
-        foreach (var item in self.GetAll())
-            if (predicate.Evaluate())
-                self.Remove(item);
-        return (TThisContainer)self;
-    }
+    Dictionary<TKey, TValue> Raw<TKey, TValue>()
+        where TKey : notnull;
+
 }

@@ -7,54 +7,23 @@ using System.Diagnostics.CodeAnalysis;
 namespace Batter.Utils.Builders;
 
 /// <summary>
-/// 
+///     Represents a property that can be managed within a property container.
+///     This interface defines the contract for objects that can be stored in
+///     builders using a key-based system, enabling flexible property management.
+///     Uses unified storage pattern for consistency.
 /// </summary>
-/// <typeparam name="TThis"></typeparam>
+/// <typeparam name="TThis">The implementing property type (for self-referencing)</typeparam>
+/// <typeparam name="TKey">The type of key used to identify this property</typeparam>
 /// <typeparam name="TContainer"></typeparam>
-/// <typeparam name="TKeyType"></typeparam>
-public interface IProp<out TContainer, in TThis, out TKeyType>
-    where TThis : IProp<TContainer, TThis, TKeyType>
-    where TContainer : IPropContainer<TContainer, TThis, TKeyType>
-    where TKeyType : notnull, IEquatable<TKeyType> {
+public interface IProp<out TContainer, TThis, out TKey> : IEquatable<TThis>
+    where TThis : IProp<TContainer, TThis, IValidKey>
+    where TKey : notnull, IValidKey {
+
     /// <summary>
-    /// 
+    ///     Gets the unique identifier of a property.
+    ///     The identifier is utilized to distinguish and manage individual properties uniquely in a container structure.
     /// </summary>
     [NotNull]
-    TKeyType Id { get; }
-}
+    TKey Id { get; }
 
-/// <summary>
-/// 
-/// </summary>
-public static class PropExtensions {
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="builder"></param>
-    /// <param name="prop"></param>
-    /// <typeparam name="TThisContainer"></typeparam>
-    /// <typeparam name="TProp"></typeparam>
-    /// <typeparam name="TPropKey"></typeparam>
-    /// <returns></returns>
-    public static TThisContainer With<TThisContainer, TProp, TPropKey>(
-        this TThisContainer builder,
-        TProp prop)
-        where TProp : IProp<TThisContainer, TProp, TPropKey>
-        where TThisContainer : IPropContainer<TThisContainer, TProp, TPropKey>
-        where TPropKey : IEquatable<TPropKey> {
-        if (builder is not TThisContainer container)
-            throw new InvalidOperationException(
-                $"Builder of type {typeof(TThisContainer).Name} does not implement IBuilderWithProps<{typeof(TThisContainer).Name}>.");
-        if (container.GetAll().Any(p => {
-                if (p is TProp thisProp)
-                    return thisProp.Id.Equals(prop.Id);
-                throw new InvalidOperationException(
-                    $"Property with ID '{prop.Id}' is not of type {typeof(TProp).Name}.");
-            }))
-            throw new InvalidOperationException(
-                $"Property with ID '{prop.Id}' already exists in the builder of type {typeof(TThisContainer).Name}.");
-
-        container.Add(prop.Id, prop);
-        return container;
-    }
 }

@@ -1,105 +1,45 @@
-namespace Batter.Utils.Builders.Predicates;
+#region
 
-/// <summary>
-/// 
-/// </summary>
-public sealed class Neither : IPredicate {
-    private readonly Either _inner;
+    using System.Diagnostics.CodeAnalysis;
+
+#endregion
+
+    namespace Batter.Utils.Builders.Predicates;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="Neither"/> class.
     /// </summary>
-    /// <param name="left">The first predicate.</param>
-    /// <param name="right">The second predicate.</param>
-    public Neither(IPredicate left, IPredicate right) => this._inner = new(left, right);
+    public sealed class Neither : IPredicate {
 
-    /// <inheritdoc />
-    public bool Evaluate() {
-        return !this._inner.Evaluate();
-    }
+        private readonly Either _inner;
 
-    /// <inheritdoc />
-    public IPredicate When(IPredicate predicate) {
-        return new Not(this._inner.When(predicate));
-    }
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="Neither" /> class.
+        /// </summary>
+        /// <param name="left">The first predicate.</param>
+        /// <param name="right">The second predicate.</param>
+        public Neither(IPredicate left, IPredicate right) { this._inner = new(left, right); }
 
-    /// <inheritdoc />
-    public IPredicate If(bool condition) {
-        return new Not(this._inner.If(condition));
-    }
+        /// <inheritdoc />
+        public bool Evaluate() { return !this._inner.Evaluate(); }
 
-    /// <inheritdoc />
-    public IPredicate IfNot(bool condition) {
-        return new Not(this._inner.IfNot(condition));
-    }
+        /// <inheritdoc />
+        public bool Equals(IPredicate? other) {
+            if (other is Neither otherNeither) return this._inner.Equals(otherNeither._inner);
 
-    /// <inheritdoc />
-    public IPredicate IfNot(IPredicate predicate) {
-        return new Not(this._inner.IfNot(predicate));
-    }
+            return false;
+        }
 
-    /// <inheritdoc />
-    public IPredicate And(bool condition) {
-        return new Not(this._inner.And(condition));
-    }
+        /// <inheritdoc />
+        public bool Is([NotNull] IPredicate other) { return this.Equals(other); }
 
-    /// <inheritdoc />
-    public IPredicate And(IPredicate predicate) {
-        return new Not(this._inner.And(predicate));
-    }
+        /// <inheritdoc />
+        public IPredicate Clone() { return new Neither(this._inner.Clone(), this._inner.Clone()); }
 
-    /// <inheritdoc />
-    public IPredicate AndNot(bool condition) {
-        return new Not(this._inner.AndNot(condition));
-    }
 
-    /// <inheritdoc />
-    public IPredicate AndNot(IPredicate predicate) {
-        return new Not(this._inner.AndNot(predicate));
-    }
+        /// <inheritdoc />
+        IPredicate<object> IInto<IPredicate<object>>.Into() { throw new NotImplementedException(); }
 
-    /// <inheritdoc />
-    public IPredicate Or(bool condition) {
-        return new Not(this._inner.Or(condition));
-    }
+        /// <inheritdoc />
+        public IPredicate From(IPredicate<object> other) { throw new NotImplementedException(); }
 
-    /// <inheritdoc />
-    public IPredicate Or(IPredicate predicate) {
-        return new Not(this._inner.Or(predicate));
     }
-
-    /// <inheritdoc />
-    public bool Equals<TValue>(TValue value) {
-        return new Not(this._inner).Equals(value);
-    }
-
-    /// <inheritdoc />
-    public bool DoesntEqual<TValue>(TValue value) {
-        return new Not(this._inner).DoesntEqual(value);
-    }
-
-    /// <inheritdoc />
-    public bool DoesntEqual(object value) {
-        return new Not(this._inner).DoesntEqual(value);
-    }
-
-    /// <inheritdoc />
-    public IPredicate Matches<TValue>(Func<IPredicate, TValue> op) {
-        return new Not(this._inner.Matches(op));
-    }
-
-    /// <inheritdoc />
-    public IPredicate Matches(Func<IPredicate, object> op) {
-        return new Not(this._inner.Matches(op));
-    }
-
-    /// <inheritdoc />
-    public IPredicate Chain(params Func<IPredicate, object>[] actions) {
-        return new Not(this._inner.Chain(actions));
-    }
-
-    /// <inheritdoc />
-    public IPredicate Chain<TValue>(params Func<IPredicate, TValue>[] action) {
-        return new Not(this._inner.Chain(action));
-    }
-}

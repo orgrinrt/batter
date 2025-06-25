@@ -19,4 +19,12 @@
         <DocumentationFile>bin\Release\net6.0\Batter.Utils.Builders.xml</DocumentationFile>
     </PropertyGroup>
 
+    <ItemGroup>
+        <Compile Remove="Convenience\FluentOperators.cs"/>
+        <Compile Remove="Convenience\DynamicProp.cs"/>
+        <Compile Remove="Convenience\DynamicContainer.cs"/>
+        <Compile Remove="Convenience\FluentSyntax.cs"/>
+        <Compile Remove="Convenience\AttributeDefinition.cs"/>
+    </ItemGroup>
+
 </Project>
