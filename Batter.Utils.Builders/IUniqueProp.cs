@@ -7,7 +7,7 @@ namespace Batter.Utils.Builders;
 /// </summary>
 /// <typeparam name="TContainer">The container type that manages this property</typeparam>
 /// <typeparam name="TThis">The implementing property type (for self-referencing)</typeparam>
-public interface IUniqueProp<out TContainer, TThis> : IEquatable<TThis>
+public interface IUniqueProp<out TContainer, TThis> : IEquatable<TThis>, IValidProperty
     where TThis : IUniqueProp<TContainer, TThis> {
 
     // No additional members required - type serves as the key

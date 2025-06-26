@@ -17,6 +17,15 @@ public abstract class DynBuilder<TResult, TThis> : DynBuilder<TResult>
     //                        "Failed to create instance of type " + typeof(TThis).FullName));
     // }
 
+    public static implicit operator TThis(DynBuilder<TResult, TThis> builder) {
+        return builder as TThis ?? throw new ArgumentNullException(nameof(builder));
+    }
+
+    public static implicit operator DynBuilder<TResult, TThis>(TThis builder) {
+        return builder as DynBuilder<TResult, TThis> ??
+               throw new ArgumentNullException(nameof(builder), "Cannot convert to DynBuilder<TResult, TThis>");
+    }
+
 }
 
 public abstract class DynBuilder<TResult> : DynBuilder

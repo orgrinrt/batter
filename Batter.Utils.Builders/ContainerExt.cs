@@ -286,6 +286,20 @@ public static partial class ContainerExtensions {
     }
 
     /// <summary>
+    ///     Sets a property with the specified key and value.
+    /// </summary>
+    public static TThis WithProp<TProp, TThis, TStorage, TCollection>(
+        this IContainer<TThis, TStorage, TCollection> container,
+        TProp                                         value
+    )
+        where TThis : class, IContainer<TThis, TStorage, TCollection>
+        where TStorage : class, IContainerStorage<TStorage, TThis, TCollection>, new()
+        where TCollection : class, IObjCollection
+        where TProp : IProp<TThis, TProp, IValidKey> {
+        return container.WithProp(new(value.Id), value);
+    }
+
+    /// <summary>
     ///     Sets a property with the specified typed key to its default value.
     /// </summary>
     public static TThis WithDefaultProp<TKey, TProp, TThis, TStorage, TCollection>(

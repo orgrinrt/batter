@@ -29,11 +29,14 @@ public class SimpleCharacterExample {
 
         DynBuildable aragorn = Character.From<CharacterBuilder>()
                                         .With<Name>("Aragorn")
-                                        .With<Level>(20)
+                                        .With<Level>(50)
                                         .With<Skill>(SkillKey.Swords)
                                         .With<Skill>(SkillKey.Leadership)
                                         .With(new Skill(SkillKey.Swords, 90))
                                         .With<Skill>(SkillKey.Sulking, 15)
+                                        .With<Skill>(1 == 2
+                                                         ? SkillKey.Cooking
+                                                         : SkillKey.Stealth) // example of conditional
                                         .Build();
 
         var gandalf = Character.Create()

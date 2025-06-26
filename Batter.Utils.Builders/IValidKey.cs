@@ -114,6 +114,9 @@ public sealed class Key<TKey> : IValidKey<Key<TKey>>,
 /// </summary>
 public sealed class DynKey : IValidKey<DynKey> {
 
+    public const           string INVALID_NAME = "__Invalid__";
+    public static readonly DynKey INVALID      = new(DynKey.INVALID_NAME);
+
     private readonly object _value;
     private readonly Type   _valueType;
 
@@ -166,6 +169,7 @@ public sealed class DynKey : IValidKey<DynKey> {
     /// <inheritdoc />
     public bool Equals(IValidKey<DynKey>? other) { throw new NotImplementedException(); }
 
+
     /// <summary>
     ///     Determines whether this key is equal to another object.
     /// </summary>
@@ -206,6 +210,26 @@ public sealed class DynKey : IValidKey<DynKey> {
 
     /// <inheritdoc />
     public int GetHashCode(DynKey obj) { throw new NotImplementedException(); }
+
+    /// <summary>
+    ///     Determines whether two DynKey instances are equal.
+    /// </summary>
+    /// <param name="left">The first DynKey to compare</param>
+    /// <param name="right">The second DynKey to compare</param>
+    /// <returns>true if the keys are equal; otherwise, false</returns>
+    public static bool operator ==(DynKey? left, DynKey? right) {
+        if (left is null) return right is null;
+
+        return left.Equals(right);
+    }
+
+    /// <summary>
+    ///     Determines whether two DynKey instances are not equal.
+    /// </summary>
+    /// <param name="left">The first DynKey to compare</param>
+    /// <param name="right">The second DynKey to compare</param>
+    /// <returns>true if the keys are not equal; otherwise, false</returns>
+    public static bool operator !=(DynKey? left, DynKey? right) { return !(left == right); }
 
     /// <summary>
     ///     Gets a string representation of this key.

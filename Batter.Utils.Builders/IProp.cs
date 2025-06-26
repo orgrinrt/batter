@@ -6,6 +6,8 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Batter.Utils.Builders;
 
+public interface IValidProperty { }
+
 /// <summary>
 ///     Represents a property that can be managed within a property container.
 ///     This interface defines the contract for objects that can be stored in
@@ -15,7 +17,8 @@ namespace Batter.Utils.Builders;
 /// <typeparam name="TThis">The implementing property type (for self-referencing)</typeparam>
 /// <typeparam name="TKey">The type of key used to identify this property</typeparam>
 /// <typeparam name="TContainer"></typeparam>
-public interface IProp<out TContainer, TThis, out TKey> : IEquatable<TThis>
+public interface IProp<out TContainer, TThis, out TKey> : IEquatable<TThis>,
+                                                          IValidProperty
     where TThis : IProp<TContainer, TThis, IValidKey>
     where TKey : notnull, IValidKey {
 
