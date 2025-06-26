@@ -2,12 +2,14 @@ namespace Batter.Utils.Builders.Dynamic;
 
 public abstract class DynBuilder<TResult, TThis> : DynBuilder<TResult>
     where TResult : IBuildableObj
-    where TThis : DynBuilder<TResult, TThis> {
+    where TThis : DynBuilder<TResult, TThis>, new() {
 
     /// <summary>
     ///     Initializes a new instance of the DynBuilder.
     /// </summary>
     public DynBuilder() { }
+
+    public static TThis New() { return new(); }
 
     // public static TThis Create() {
     //     return (TThis)(Activator.CreateInstance(typeof(TThis)) ??

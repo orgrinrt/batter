@@ -342,12 +342,6 @@ public class Character : DynBuildable<Character, CharacterBuilder> {
 /// </summary>
 public class CharacterBuilder : DynBuilder<Character, CharacterBuilder> {
 
-    /// <summary>
-    ///     Creates a new CharacterBuilder instance
-    /// </summary>
-    /// <returns>A new CharacterBuilder</returns>
-    public static CharacterBuilder New() { return new(); }
-
     /// <inheritdoc />
     public override Character Build(Character? nonDefaultStartingPoint) {
         // NOTE: this eximplifies a standard use case for the builder pattern
