@@ -6,6 +6,7 @@ insert_final_newline = false
 indent_style = space
 indent_size = 4
 
+
 # Microsoft .NET properties
 csharp_new_line_before_catch = false
 csharp_new_line_before_else = false
@@ -543,3 +544,22 @@ indent_size = 2
 [{*.har,*.jsb2,*.jsb3,*.json,*.jsonc,*.postman_collection,*.postman_collection.json,*.postman_environment,*.postman_environment.json,.babelrc,.eslintrc,.prettierrc,.stylelintrc,.ws-context,jest.config}]
 indent_style = space
 indent_size = 2
+
+# Targeted indexer formatting within method chains
+[**/Batter.Utils.Builders/Examples/*.cs]
+# Preserve existing formatting where possible
+resharper_keep_existing_linebreaks = true
+resharper_keep_existing_arrangement = true
+
+# Force array/indexer expressions onto separate lines
+resharper_csharp_wrap_array_initializer_style = chop_always
+resharper_array_initializer_wrap_style = chop_always
+resharper_wrap_array_initializer_style = chop_always
+
+# Ensure proper indexer indentation
+resharper_indent_array_initializer = true
+resharper_indent_size = 4
+resharper_indent_braces = false
+
+# Control spacing within indexers
+resharper_space_within_array_access_brackets = true

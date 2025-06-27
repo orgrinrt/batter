@@ -6,7 +6,11 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Batter.Utils.Builders;
 
-public interface IValidProperty { }
+public interface IValidProperty : IInternallyMutableBuilderTarget {
+
+    DynKey GetKey();
+
+}
 
 /// <summary>
 ///     Represents a property that can be managed within a property container.
@@ -28,5 +32,9 @@ public interface IProp<out TContainer, TThis, out TKey> : IEquatable<TThis>,
     /// </summary>
     [NotNull]
     TKey Id { get; }
+
+    DynKey IValidProperty.GetKey() {
+        return this.Id as DynKey ?? throw new InvalidOperationException("Id must be a DynKey");
+    }
 
 }

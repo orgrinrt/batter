@@ -1,3 +1,9 @@
+#region
+
+using Batter.Utils.Builders.Attributes;
+
+#endregion
+
 namespace Batter.Utils.Builders.Dynamic;
 
 public abstract class DynBuilder<TResult, TThis> : DynBuilder<TResult>
@@ -54,14 +60,27 @@ public abstract class DynBuilder : IBuilder<DynBuildable, DynBuilder, DynStorage
 
     protected readonly DynBuildable?          _buildable = null;
     protected readonly DynStorage<DynBuilder> _storage   = new();
-    private            bool                   _isInitialized;
+
+    private bool _isInitialized;
 
     /// <summary>
     ///     Initializes a new instance of the DynBuilder.
     /// </summary>
     public DynBuilder() {
+        this.LatestTarget = this;
         if (!this._isInitialized) this.Init();
     }
+
+    [MethodLikeIndexer]
+    public DynBuilder this[Action<IInternallyMutableBuilderTarget> op] => this.UseInterfaceImplementation(op);
+
+    [MethodLikeIndexer]
+    public DynBuilder this[Func<IInternallyMutableBuilderTarget, IInternallyMutableBuilderTarget> op] =>
+        this.UseInterfaceImplementation(op);
+
+
+    /// <inheritdoc />
+    public IInternallyMutableBuilderTarget LatestTarget { get; set; }
 
 
     /// <inheritdoc />
@@ -90,6 +109,11 @@ public abstract class DynBuilder : IBuilder<DynBuildable, DynBuilder, DynStorage
             return dynBuilder.Build(nonDefaultStartingPoint as DynBuildable ?? this._buildable) as TResult;
 
         return this.Build((object?)nonDefaultStartingPoint ?? this._buildable ?? null) as TResult;
+    }
+
+    /// <inheritdoc />
+    public virtual void _OnAddition(IValidKey key, object value) {
+        // noop by default, can be overridden for custom behavior
     }
 
     /// <inheritdoc />
@@ -191,11 +215,39 @@ public abstract class DynBuilder : IBuilder<DynBuildable, DynBuilder, DynStorage
         throw new InvalidOperationException("Could not build a result. No valid builder implementation found.");
     }
 
+    // Helper method that doesn't recurse
+    private DynBuilder UseInterfaceImplementation<T>(T op) {
+        // Call the explicit interface implementation directly
+        // This is a bit tricky but can be done with a helper class
+        return OperationHelper.Execute(this, op);
+    }
+
 
     /// <summary>
     /// </summary>
     /// <param name="builder"></param>
     /// <returns></returns>
     public static implicit operator DynStorage<DynBuilder>(DynBuilder builder) { return builder.Storage; }
+
+    private static class OperationHelper {
+
+        public static DynBuilder Execute<T>(DynBuilder builder, T op) {
+            switch (op) {
+                // Implement the core logic directly here
+                // Similar to what's in the interface default implementation
+                case Action<IInternallyMutableBuilderTarget> action:
+                    action(builder.LatestTarget);
+
+                    return builder;
+                // Handle other cases similarly
+                case Func<IInternallyMutableBuilderTarget, IInternallyMutableBuilderTarget> func:
+                    builder.LatestTarget = func(builder.LatestTarget);
+
+                    return builder;
+                default: throw new ArgumentException($"Unsupported operation type: {op?.GetType().Name}");
+            }
+        }
+
+    }
 
 }

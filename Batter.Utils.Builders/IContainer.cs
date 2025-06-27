@@ -21,6 +21,8 @@ public interface IContainer<TThis, out TStorage, out TCollection> : IIsContainer
     internal TStorage    Storage    { get; }
     internal TCollection Collection => this.Storage.Collection;
 
+    internal AdditionHandler<DynKey, object>? OnAddition { get; }
+
     #region "Collection Management"
 
     /// <summary>
@@ -34,6 +36,9 @@ public interface IContainer<TThis, out TStorage, out TCollection> : IIsContainer
     }
 
     #endregion
+
+    internal delegate void AdditionHandler<in TKey, in TItem>(TThis container, TKey key, TItem item)
+        where TKey : IValidKey;
 
 
     #region "Property Accessors"
@@ -162,6 +167,7 @@ public interface IContainer<TThis, out TStorage, out TCollection> : IIsContainer
     TThis WithProp<TProp>(DynKey key, TProp value)
         where TProp : IProp<TThis, TProp, IValidKey> {
         this.Collection.Raw()[key] = value;
+        this.OnAddition?.Invoke((TThis)this, key, value);
 
         return (TThis)this;
     }
@@ -169,11 +175,13 @@ public interface IContainer<TThis, out TStorage, out TCollection> : IIsContainer
     TThis WithProp<TKey, TProp>(TKey key, TProp value)
         where TKey : notnull, IEquatable<TKey>, IValidKey<TKey>
         where TProp : IProp<TThis, TProp, IValidKey<TKey>> {
+        // FIXME: likely not efficient
         return this.WithProp(new(key), value);
     }
 
     TThis WithProp<TProp>(IValidKey key, TProp value)
         where TProp : IProp<TThis, TProp, IValidKey> {
+        // FIXME: likely not efficient 
         return this.WithProp(new(key), value);
     }
 
@@ -215,6 +223,7 @@ public interface IContainer<TThis, out TStorage, out TCollection> : IIsContainer
     /// <returns>The container instance for method chaining</returns>
     TThis WithObj<TItem>(DynKey key, TItem value) {
         this.Collection.Raw()[key] = value!;
+        this.OnAddition?.Invoke((TThis)this, key, value ?? throw new ArgumentNullException(nameof(value)));
 
         return (TThis)this;
     }
@@ -320,13 +329,18 @@ public interface IContainer<TThis, out TStorage, out TCollection> : IIsContainer
 
     TThis WithUniqueProp<TProp>(TProp value)
         where TProp : IUniqueProp<TThis, TProp> {
-        this.Collection.Raw()[new(typeof(TProp))] = value;
+        var key = new DynKey(typeof(TProp));
+        this.Collection.Raw()[key] = value;
+        this.OnAddition?.Invoke((TThis)this, key, value ?? throw new ArgumentNullException(nameof(value)));
+
 
         return (TThis)this;
     }
 
     TThis WithUniqueProp<TProp>(Type type, [NotNull] TProp value) {
-        this.Collection.Raw()[new(type)] = value ?? throw new ArgumentNullException(nameof(value));
+        var key = new DynKey(type);
+        this.Collection.Raw()[key] = value ?? throw new ArgumentNullException(nameof(value));
+        this.OnAddition?.Invoke((TThis)this, key, value ?? throw new ArgumentNullException(nameof(value)));
 
         return (TThis)this;
     }

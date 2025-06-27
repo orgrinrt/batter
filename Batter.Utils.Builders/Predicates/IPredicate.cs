@@ -22,8 +22,7 @@ namespace Batter.Utils.Builders.Predicates;
 ///     .Evaluate();
 /// </code>
 /// </remarks>
-public interface IPredicate : IConditionalApi<IPredicate>,
-                              IDeepCloneable<IPredicate>,
+public interface IPredicate : IDeepCloneable<IPredicate>,
                               IInto<IPredicate<object>>,
                               IFrom<IPredicate<object>, IPredicate> {
 
@@ -38,10 +37,9 @@ public interface IPredicate : IConditionalApi<IPredicate>,
 /// <summary>
 /// </summary>
 /// <typeparam name="TThis"></typeparam>
-public interface IPredicate<TThis> : IConditionalApi<IPredicate<TThis>>,
-                                     IDeepCloneable<IPredicate<TThis>>,
-                                     IInto<IPredicate>,
-                                     IFrom<IPredicate, TThis> {
+public interface IPredicate<out TThis> : IDeepCloneable<IPredicate<TThis>>,
+                                         IInto<IPredicate>,
+                                         IFrom<IPredicate, TThis> {
 
     /// <summary>
     ///     Evaluates the predicate.

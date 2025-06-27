@@ -3,12 +3,102 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
+using Batter.Utils.Builders.Attributes;
 using Batter.Utils.Builders.Dynamic;
 using Batter.Utils.Builders.Predicates;
 
 #endregion
 
 namespace Batter.Utils.Builders;
+
+public interface IInternallyMutableBuilderTarget { }
+
+public interface IInternallyMutableBuilder<TBuilder> : IInternallyMutableBuilderTarget
+    where TBuilder : class, IInternallyMutableBuilder<TBuilder> {
+
+    protected IInternallyMutableBuilderTarget LatestTarget { get; set; }
+
+    [MethodLikeIndexer]
+    TBuilder this[Func<IInternallyMutableBuilderTarget, IInternallyMutableBuilderTarget> op] {
+        get {
+            if (op == null) throw new ArgumentNullException(nameof(op));
+
+            return new Operation<Func<IInternallyMutableBuilderTarget, IInternallyMutableBuilderTarget>>(
+                (TBuilder)this,
+                op).Invoke<IInternallyMutableBuilderTarget>();
+        }
+    }
+
+    [MethodLikeIndexer]
+    TBuilder this[Action<IInternallyMutableBuilderTarget> op] {
+        get {
+            if (op == null) throw new ArgumentNullException(nameof(op));
+
+            return new Operation<Action<IInternallyMutableBuilderTarget>>((TBuilder)this, op)
+               .Invoke<IInternallyMutableBuilderTarget>();
+        }
+    }
+
+    public sealed class Operation<TFunc> {
+
+        public TBuilder Builder { get; }
+        public TFunc    Func    { get; }
+
+        public Operation(TBuilder builder, TFunc op) {
+            this.Builder = builder;
+            this.Func    = op;
+        }
+
+        public TBuilder Invoke<TTarget>()
+            where TTarget : IInternallyMutableBuilderTarget {
+            switch (this.Func) {
+                case Func<TBuilder, TTarget> func: {
+                    TTarget target = func(this.Builder);
+                    this.Builder.LatestTarget = target;
+
+                    return this.Builder;
+                }
+                case Func<TBuilder, IInternallyMutableBuilderTarget> func2: {
+                    IInternallyMutableBuilderTarget target = func2(this.Builder);
+                    this.Builder.LatestTarget = target;
+
+                    return this.Builder;
+                }
+                default: {
+                    switch (this.Func) {
+                        case Func<IInternallyMutableBuilderTarget, IInternallyMutableBuilderTarget> func3: {
+                            IInternallyMutableBuilderTarget target = func3(this.Builder.LatestTarget);
+                            this.Builder.LatestTarget = target;
+
+                            if (target is TTarget tTarget) return this.Builder;
+
+                            throw new InvalidOperationException(
+                                $"Operation '{this.Func.GetType().Name}' is not compatible with the expected type '{typeof(TTarget).Name}'.");
+                        }
+                        case Func<TBuilder, object> func4 when typeof(TTarget) == typeof(object): {
+                            object target = func4(this.Builder);
+                            this.Builder.LatestTarget = (IInternallyMutableBuilderTarget)target;
+
+                            return this.Builder;
+                        }
+                        case Func<TBuilder, IInternallyMutableBuilderTarget> func5
+                            when typeof(TTarget) == typeof(IInternallyMutableBuilderTarget): {
+                            IInternallyMutableBuilderTarget target = func5(this.Builder);
+                            this.Builder.LatestTarget = target;
+
+                            return this.Builder;
+                        }
+                        default:
+                            throw new InvalidOperationException(
+                                $"Operation '{this.Func?.GetType().Name}' is not compatible with the expected type '{typeof(TTarget).Name}'.");
+                    }
+                }
+            }
+        }
+
+    }
+
+}
 
 /// <summary>
 ///     Non-generic marker interface for all builders.
@@ -39,7 +129,7 @@ public interface IObjBuilder {
 /// <typeparam name="TBuilder">The concrete builder type, enabling fluent method chaining.</typeparam>
 /// <typeparam name="TStorage">The unified storage type</typeparam>
 public interface IBuilder<out TResult, TBuilder, out TStorage> : IObjBuilder,
-                                                                 IConditionalApi<TBuilder>,
+                                                                 IInternallyMutableBuilder<TBuilder>,
                                                                  IContainer<TBuilder, TStorage,
                                                                      DynCollection<DynKey, object>>,
                                                                  IDeepCloneable<TBuilder>
@@ -47,7 +137,17 @@ public interface IBuilder<out TResult, TBuilder, out TStorage> : IObjBuilder,
     where TBuilder : class, IBuilder<TResult, TBuilder, TStorage>
     where TStorage : class, IContainerStorage<TStorage, TBuilder, DynCollection<DynKey, object>>, new() {
 
+    AdditionHandler<DynKey, object>? IContainer<TBuilder, TStorage, DynCollection<DynKey, object>>.OnAddition =>
+        this._OnAddition;
+
     object IObjBuilder.Build(object? nonDefaultStartingPoint) { return this.Build(nonDefaultStartingPoint); }
+
+    void _OnAddition(TBuilder container, DynKey key, object item) {
+        this.LatestTarget = item as IInternallyMutableBuilderTarget ?? container;
+        this._OnAddition(key, item);
+    }
+
+    void _OnAddition(IValidKey key, object value);
 
     /// <summary>
     ///     Builds and returns the final result by executing the step tree.

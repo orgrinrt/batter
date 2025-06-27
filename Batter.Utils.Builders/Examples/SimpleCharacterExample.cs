@@ -43,6 +43,7 @@ public class SimpleCharacterExample {
                                .With<Name>("Gandalf")
                                .With<Level>(60)
                                .With<Skill>(SkillKey.Magic)
+                                [ skillMagic => (skillMagic as Skill)!.Level = 100 ]
                                .With<Skill>(SkillKey.Smoking, 20)
                                .Build<Character>();
 
@@ -58,6 +59,7 @@ public class SimpleCharacterExample {
         // Print character descriptions
         Console.WriteLine("Characters created using the unified builder API:");
         Console.WriteLine();
+
         Console.WriteLine(aragorn.As<Character>().GetDescription());
         Console.WriteLine();
         Console.WriteLine(gandalf?.GetDescription());
@@ -362,8 +364,8 @@ public class CharacterBuilder : DynBuilder<Character, CharacterBuilder> {
 
             if (value is Skill skillProp) {
                 Console.WriteLine(addMsg);
-                character.Skills[(SkillKey)key] = (ushort)skillProp.Level;
-                addedThisIter                   = true;
+                character.Skills[ (SkillKey)key ] = (ushort)skillProp.Level;
+                addedThisIter                     = true;
             }
 
             switch (value) {

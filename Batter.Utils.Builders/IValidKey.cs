@@ -1,5 +1,6 @@
 #region
 
+using System.Data;
 using System.Reflection;
 
 #endregion
@@ -329,46 +330,75 @@ public sealed class DynKey : IValidKey<DynKey> {
     /// <param name="value">The enum value to convert</param>
     public static implicit operator DynKey(Enum value) { return new(value); }
 
-    /// <summary>
-    /// </summary>
-    /// <param name="value"></param>
-    /// <returns></returns>
-    public static implicit operator string(DynKey value) { return value.ToString(); }
-
-    /// <summary>
-    /// </summary>
-    /// <param name="value"></param>
-    /// <returns></returns>
-    public static explicit operator int(DynKey value) { return value.As<int>(); }
-
-    /// <summary>
-    /// </summary>
-    /// <param name="value"></param>
-    /// <returns></returns>
-    public static explicit operator long(DynKey value) { return value.As<long>(); }
-
-    /// <summary>
-    /// </summary>
-    /// <param name="value"></param>
-    /// <returns></returns>
-    public static explicit operator Guid(DynKey value) { return value.As<Guid>(); }
-
-    /// <summary>
-    /// </summary>
-    /// <param name="value"></param>
-    /// <returns></returns>
-    public static explicit operator Enum(DynKey value) { return value.As<Enum>(); }
-
-    public static explicit operator Type(DynKey value) { return value.As<Type>(); }
-
     public static explicit operator DynKey(Type value) { return new(value); }
-
-    public static implicit operator Key<IValidKey>(DynKey value) { return new(value); }
 
     public static implicit operator DynKey(Key<IValidKey> value) {
         if (value == null) throw new ArgumentNullException(nameof(value), "Key cannot be null.");
 
         return new(value.Value);
+    }
+
+    /// <summary>
+    /// </summary>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    public static implicit operator string(DynKey value) {
+        return value != DynKey.INVALID
+            ? value.ToString()
+            : throw new InvalidExpressionException();
+    }
+
+    /// <summary>
+    /// </summary>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    public static explicit operator int(DynKey value) {
+        return value != DynKey.INVALID
+            ? value.As<int>()
+            : throw new InvalidExpressionException();
+    }
+
+    /// <summary>
+    /// </summary>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    public static explicit operator long(DynKey value) {
+        return value != DynKey.INVALID
+            ? value.As<long>()
+            : throw new InvalidExpressionException();
+    }
+
+    /// <summary>
+    /// </summary>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    public static explicit operator Guid(DynKey value) {
+        return value != DynKey.INVALID
+            ? value.As<Guid>()
+            : throw new InvalidExpressionException();
+    }
+
+    /// <summary>
+    /// </summary>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    public static explicit operator Enum(DynKey value) {
+        return value != DynKey.INVALID
+            ? value.As<Enum>()
+            : throw new InvalidExpressionException();
+    }
+
+    public static explicit operator Type(DynKey value) {
+        return value != DynKey.INVALID
+            ? value.As<Type>()
+            : throw new InvalidExpressionException();
+    }
+
+
+    public static implicit operator Key<IValidKey>(DynKey value) {
+        return value != DynKey.INVALID
+            ? new(value)
+            : throw new InvalidExpressionException();
     }
 
 }

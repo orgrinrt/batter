@@ -54,8 +54,7 @@ public static class DynExtensions {
 
     public static DynBuilder With<TItem>(this DynBuilder builder, DynKey key, params object[] ctorArgs)
         where TItem : class {
-        return builder.With(((key, ctorArgs) as DynCtorCallArgs<TItem> ?? new DynCtorCallArgs<TItem>(key, ctorArgs))
-                           .WithBuilder(builder));
+        return builder.With(new DynCtorCallArgs<TItem>((key, ctorArgs)).WithBuilder(builder));
     }
 
 
@@ -86,8 +85,9 @@ public static class DynExtensions {
             return (DynBuilder)genericMethod.Invoke(builder, new object?[] { ctorInstance })!;
         }
 
-        if (key == null || key == DynKey.INVALID)
-            throw new ArgumentNullException(nameof(key), "Key cannot be null or invalid.");
+        if (key == DynKey.INVALID) throw new ArgumentNullException(nameof(key), "Key cannot be invalid.");
+
+        if (key == null) throw new ArgumentNullException(nameof(key), "Key cannot be null.");
 
         if (ctorArgs.Length == 1 && ctorArgs[0] is TItem item) return builder.With(key, item);
 
@@ -247,7 +247,20 @@ public static class DynExtensions {
     public static DynBuilder With<TItem>(this DynBuilder builder, TItem instance)
         where TItem : class, IProp<DynBuilder, TItem, IValidKey> {
         // return builder.WithProp(instance.Id, instance ?? throw new NoNullAllowedException());
-        return builder.With(new DynCtorCallArgs<TItem>(instance).WithBuilder(builder));
+        if (typeof(TItem).GetInterfaces().Any(i => i.Name.Contains("IUniqueProp"))) {
+            // If TItem is a unique property, we can use the WithUniqueProp method
+            return (builder as IContainer<DynBuilder, DynStorage<DynBuilder>, DynCollection<DynKey, object>>)
+               .WithUniqueProp(typeof(TItem), instance ?? throw new NoNullAllowedException());
+        }
+
+        if (typeof(TItem).GetInterfaces().Any(i => i.Name.Contains("IProp"))) {
+            // If TItem is a regular property, we can use the WithProp method
+            return (builder as IContainer<DynBuilder, DynStorage<DynBuilder>, DynCollection<DynKey, object>>).WithProp(
+                instance.Id,
+                instance ?? throw new NoNullAllowedException());
+        }
+
+        return builder.With<TItem>(new object[] { instance });
     }
     //
     // public static DynBuilder With<TItem>(this DynBuilder builder, params object[] ctorArgs)
@@ -346,7 +359,8 @@ public sealed class DynCtorCallArgs<TItem>
         if (builder == null) throw new ArgumentNullException(nameof(builder), "Builder cannot be null.");
 
         // Use the builder to create an instance of TResult using the provided key and constructor arguments.
-        if (!builder.Storage.Collection.ContainsKey(this.Key)) this.Item = builder.Add<TItem>(this.Key, this.CtorArgs);
+        if (this.Key != DynKey.INVALID && !builder.Storage.Collection.ContainsKey(this.Key))
+            this.Item = builder.Add<TItem>(this.Key, this.CtorArgs);
 
         return this;
     }
@@ -384,11 +398,15 @@ public sealed class DynCtorCallArgs<TItem>
     }
 
     public static implicit operator (DynKey, object[])(DynCtorCallArgs<TItem> args) {
-        return (args.Key, args.CtorArgs);
+        return (args.Key,
+                args.CtorArgs.Length > 0     ? args.CtorArgs :
+                args.Item            != null ? new object[] { args.Item } : new object[] { });
     }
 
-    public static implicit operator (DynKey, TItem)(DynCtorCallArgs<TItem> args) {
-        return (args.Key, args.Item ?? throw new InvalidOperationException("Item cannot be null."));
+    public static explicit operator (DynKey, TItem)(DynCtorCallArgs<TItem> args) {
+        return (args.Item is IValidProperty prop
+                    ? prop.GetKey()
+                    : args.Key, args.Item ?? throw new InvalidOperationException("Item cannot be null."));
     }
 
     public static implicit operator DynCtorCallArgs<TItem>((DynKey, object[]) args) { return new(args); }
