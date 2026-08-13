@@ -2,6 +2,7 @@
 
     <PropertyGroup>
         <Version>0.0.1</Version>
+        <Description>Crash-guard Harmony patches and campaign fixes for Mount &amp; Blade II: Bannerlord.</Description>
         <TargetFrameworks>net472;net6.0</TargetFrameworks>
         <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
         <LangVersion>latest</LangVersion>
