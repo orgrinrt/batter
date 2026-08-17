@@ -34,4 +34,4 @@ BANNERLORD_GAME_DIR="/path/to/Mount & Blade II Bannerlord" dotnet build Batter.s
 
 NuGet dependencies: Lib.Harmony, Bannerlord.ButterLib, Bannerlord.UIExtenderEx, Bannerlord.MCM,
 and Bannerlord.ReferenceAssemblies. The module manifest (`SubModule.xml`) declares dependencies on
-Bannerlord.Harmony and Bannerlord.MBOptionScreen.
+Bannerlord.Harmony, Bannerlord.MBOptionScreen, Native, SandBoxCore, Sandbox, and StoryMode.
