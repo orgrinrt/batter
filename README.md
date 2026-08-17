@@ -20,7 +20,7 @@ mid-rewrite.
 | `Batter.Core` | net472, net6.0 | The module itself: Harmony patches, campaign behaviors, the item value model, and XSLT `ModuleData` transforms (culture name extensions, armor culture autopatch, missing item prices, item variety). |
 | `Batter.Utils.Builders` | net6.0 | Standalone fluent builder library: `IBuilder`/`IBuildable` contracts, `DynBuilder` dynamic builders, and predicate combinators. No Bannerlord dependency. |
 | `Batter.ItemValuation` | net6.0 | Item valuation library. Currently contains no sources. |
-| `Batter.ItemValuation.Tests` | net6.0 | NUnit test project for `Batter.ItemValuation`. |
+| `Batter.ItemValuation.Tests` | net6.0 | NUnit test project for `Batter.ItemValuation`. Currently contains no sources. |
 
 ## Building
 
