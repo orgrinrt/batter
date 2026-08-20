@@ -85,7 +85,7 @@ public class SubModule : MBSubModuleBase {
             }
         }
         catch (Exception ex) {
-            BatterLog.Error("     >> failed to initialize submodule:\n {ex}");
+            BatterLog.Error($"     >> failed to initialize submodule:\n {ex}");
         }
 
         BatterLog.Hr(nameof(SubModule.OnGameStart) + " END");
